@@ -16,8 +16,15 @@ def load_llm(metadata: dict, **kwargs):
             "api_key": api_key,
             "temperature": 0.0,
         }
+        # Opus 4.7+ rejects temperature/top_p/top_k with a 400 error
+        if model_name == "claude-opus-4.8":
+            anthropic_model_config.pop("temperature")
 
         model_config = {
+            "claude-opus-4.8": {
+                "model_name": "claude-opus-4-8",
+                "max_tokens": 64_000,
+            },
             "claude-4.6": {
                 "model_name": "claude-sonnet-4-6"
             },
@@ -36,8 +43,8 @@ def load_llm(metadata: dict, **kwargs):
             raise ValueError(f"Unsupported model_name '{model_name}' for Anthropic")
 
         llm = ChatAnthropic(
-            **model_config[model_name], 
-            **anthropic_model_config, 
+            **model_config[model_name],
+            **anthropic_model_config,
             **kwargs,
         )
 
@@ -48,8 +55,15 @@ def load_llm(metadata: dict, **kwargs):
             "location": "us-east5",
             "temperature": 0.0,
         }
+        # Opus 4.7+ rejects temperature/top_p/top_k with a 400 error
+        if model_name == "claude-opus-4.8":
+            google_vertexai_model_config.pop("temperature")
 
         model_config = {
+            "claude-opus-4.8": {
+                "model_name": "claude-opus-4-8",
+                "max_output_tokens": 64_000,
+            },
             "claude-4.6": {
                 "model_name": "claude-sonnet-4-6",
                 "max_output_tokens": 64_000,

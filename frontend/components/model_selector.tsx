@@ -24,10 +24,15 @@ export function ModelSelector({
   selectedModelId?: string;
   onModelChange?: (modelId: string) => void;
 } & React.ComponentProps<typeof Button>) {
-  const DEFAULT_MODEL_ID = 'claude-4.6';
+  const DEFAULT_MODEL_ID = 'claude-opus-4.8';
 
   const availableChatModels = useMemo(
     () => [
+      {
+        id: 'claude-opus-4.8',
+        name: 'Claude Opus 4.8',
+        description: 'Most capable model for complex agentic research',
+      },
       {
         id: 'claude-4.6',
         name: 'Claude 4.6',
