@@ -1,9 +1,13 @@
 from jupyter_client import KernelManager
 from queue import Empty
-import time, uuid, re
+import os, time, uuid, re
 from IPython.core.ultratb import FormattedTB
 from typing import Dict, Optional
 import asyncio
+
+# Shared, versioned figure style (preloaded into every kernel)
+STYLE_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "figure_style")
 
 class JupyterSandbox:
     def __init__(self, working_dir: str, kernel_name: str=None):
@@ -12,6 +16,11 @@ class JupyterSandbox:
         self.kernel_name = kernel_name
         self.sessions: Dict[str, Dict] = {}
         self.tb_formatter = FormattedTB(mode='Plain')
+
+    def session_dir(self, session_id: str) -> str:
+        """Per-session working directory: <working_dir>/session-<id>."""
+        safe = re.sub(r"[^A-Za-z0-9_-]", "_", str(session_id)) or "default"
+        return os.path.join(self.working_dir, f"session-{safe}")
 
     def get_or_create_session(self, session_id: str) -> Dict:
         """
@@ -38,12 +47,19 @@ class JupyterSandbox:
                 'last_used': time.time()
             }
 
+            session_dir = self.session_dir(session_id)
+            os.makedirs(session_dir, exist_ok=True)
+
             self.execute_code(
                 "%load_ext rpy2.ipython", session_id=session_id, cell_id=str(uuid.uuid4()), timeout=120)
             self.execute_code(
                 "from juliacall import Main as jl", session_id=session_id, cell_id=str(uuid.uuid4()), timeout=120)
             self.execute_code(
-                f"import os; os.chdir('{self.working_dir}')", session_id=session_id, cell_id=str(uuid.uuid4()), timeout=120)
+                f"import os, sys; os.chdir('{session_dir}'); sys.path.insert(0, '{STYLE_DIR}')",
+                session_id=session_id, cell_id=str(uuid.uuid4()), timeout=120)
+            self.execute_code(
+                f"import matplotlib; matplotlib.style.use('{STYLE_DIR}/sciscigpt.mplstyle')",
+                session_id=session_id, cell_id=str(uuid.uuid4()), timeout=120)
         else:
             # Update last used timestamp
             self.sessions[session_id]['last_used'] = time.time()

@@ -12,7 +12,7 @@ from langgraph.prebuilt import InjectedState
 
 working_dir = os.getenv("LOCAL_STORAGE_PATH")
 
-def _parse_jupyter_results(results: list[dict]) -> dict:
+def _parse_jupyter_results(results: list[dict], output_dir: str = None) -> dict:
 	text_responses = [r for r in results if r['type'] == 'text']
 	image_responses = [r for r in results if r['type'] == 'image_url']
 
@@ -20,10 +20,12 @@ def _parse_jupyter_results(results: list[dict]) -> dict:
 	response["response"] = "".join([r["text"] for r in text_responses])
 
 	if len(image_responses) > 0:
+		output_dir = output_dir or working_dir
+		os.makedirs(output_dir, exist_ok=True)
 		response["images"] = []
 		for i in image_responses:
 			id = str(uuid.uuid4())
-			name = f"{working_dir}/{id}.png"
+			name = f"{output_dir}/{id}.png"
 
 			with open(name, "wb") as f:
 				f.write(base64.b64decode(i["image_url"]["url"].split(",")[1]))
@@ -55,7 +57,7 @@ class RJupyterTool(BaseTool):
 			results = self.sandbox.execute_code(f"%%R\n\n{query}", session_id=session_id, cell_id=cell_id, timeout=self.timeout)
 			results = [r for r in results if r["session_id"] == session_id and r["cell_id"] == cell_id]
 
-			response = _parse_jupyter_results(results)
+			response = _parse_jupyter_results(results, self.sandbox.session_dir(session_id))
 		except Exception as e:
 			response = {"response": "{}: {}".format(type(e).__name__, str(e))}
 		return response
@@ -68,7 +70,7 @@ class PythonJupyterInput(BaseModel):
 
 class PythonJupyterTool(BaseTool):
 	name: str = "python"
-	description: str = """Execute Python code in a persistent Jupyter environment. Input: Any valid Python code snippet to run. Output: Standard output, error messages, and output images. Always prioritize to use matplotlib or seaborn to plot the figure. Note: Don't save output images to disk. Output images will be rendered automatically."""
+	description: str = """Execute Python code in a persistent Jupyter environment. Input: Any valid Python code snippet to run. Output: Standard output, error messages, and output images. Always prioritize to use matplotlib or seaborn to plot the figure. Note: Don't save output images to disk. Output images will be rendered automatically. A publication figure style (Okabe-Ito palette, clean axes) is preloaded: build figures with `import sciscigpt_style as style; fig, ax = style.figure()` and use `style.COLORS`; design rules are in FIGURE_STANDARDS.md next to the module."""
 	
 	args_schema: Type[BaseModel] = PythonJupyterInput
 
@@ -83,7 +85,7 @@ class PythonJupyterTool(BaseTool):
 			cell_id = uuid.uuid4()
 			results = self.sandbox.execute_code(query, session_id=session_id, cell_id=cell_id, timeout=self.timeout)
 			results = [r for r in results if r["session_id"] == session_id and r["cell_id"] == cell_id]
-			response = _parse_jupyter_results(results)
+			response = _parse_jupyter_results(results, self.sandbox.session_dir(session_id))
 		except Exception as e:
 			response = {"response": "{}: {}".format(type(e).__name__, str(e))}
 		return response
@@ -111,7 +113,7 @@ class JuliaJupyterTool(BaseTool):
 				f"%%julia\n\n{query}", session_id=session_id, cell_id=cell_id, timeout=self.timeout)
 			print(results)
 			results = [r for r in results if r["session_id"] == session_id and r["cell_id"] == cell_id]
-			response = _parse_jupyter_results(results)
+			response = _parse_jupyter_results(results, self.sandbox.session_dir(session_id))
 			print(response)
 		except Exception as e:
 			response = {"response": "{}: {}".format(type(e).__name__, str(e))}

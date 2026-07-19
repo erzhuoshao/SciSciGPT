@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from langchain_core.runnables.config import run_in_executor
 
 from langchain_core.tools import InjectedToolArg
+from langgraph.prebuilt import InjectedState
 from typing_extensions import Annotated
 
 from func_timeout import func_timeout
@@ -175,6 +176,7 @@ FROM VECTOR_SEARCH(
 
 class SQLQueryInput(BaseModel):
 	query: str = Field(..., description="A valid SQL query compatible with Google BigQuery dialect.")
+	state: Annotated[dict, InjectedState] = Field(None, description="Agent state")
 	# display_mode: Literal["preview", "complete"] = Field(..., description="`preview` will display the first 10 rows. `complete` will display the complete result.")
 	# display_rows: int = Field(10, description="The number of rows to display in the preview.")
 	
@@ -199,12 +201,15 @@ class SQLQueryTool(BaseSQLDatabaseTool, BaseTool):
 	display_rows_complete: int = 200
 	demical_precision: int = 4
 
-	def _run(self, query: str, display_rows: int=10, display_mode: Literal["preview", "complete"]="preview"):
+	def _run(self, query: str, state: dict=None, display_rows: int=10, display_mode: Literal["preview", "complete"]="preview"):
 		try:
 			# display_rows = self.display_rows_preview if display_mode == "preview" else self.display_rows_complete
 
 			response = {}
-			os.makedirs(self.workspace, exist_ok=True)
+			session_id = ((state or {}).get("metadata") or {}).get("session_id", "test")
+			safe = re.sub(r"[^A-Za-z0-9_-]", "_", str(session_id)) or "default"
+			output_dir = os.path.join(self.workspace, f"session-{safe}")
+			os.makedirs(output_dir, exist_ok=True)
 
 			db = self.db_dict[self.db_name]
 			df = read_sql(query, db, self.chunksize, self.timeout)
@@ -220,7 +225,7 @@ class SQLQueryTool(BaseSQLDatabaseTool, BaseTool):
 			
 			file_id = str(uuid.uuid4())
 			file_name = self.filename if self.filename else f"{file_id}.parquet"
-			file_path = f"{self.workspace}/{file_name}"
+			file_path = f"{output_dir}/{file_name}"
 
 			df.to_parquet(file_path, index=False)
 

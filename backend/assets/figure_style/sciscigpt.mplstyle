@@ -1,0 +1,49 @@
+# sciscigpt.mplstyle — SciSciGPT publication figure standard (TEMPLATE-OWNED).
+# Adapted from the APTO-Discovery Nature-family standard for chat display:
+# Okabe-Ito colorblind-safe palette in fixed order, quiet chrome (no top/right
+# spines, no grid, thin marks), clear type hierarchy, 300 dpi exports.
+# Preloaded into every Python sandbox kernel; figures are compliant by default.
+
+figure.figsize        : 8.0, 5.33     # 3:2 chat-display canvas
+figure.dpi            : 110
+figure.constrained_layout.use : True
+
+savefig.dpi           : 300
+savefig.bbox          : tight
+savefig.pad_inches    : 0.05
+
+font.family           : sans-serif
+font.sans-serif       : Helvetica, Arial, Nimbus Sans, DejaVu Sans
+font.size             : 10
+axes.titlesize        : 12
+axes.labelsize        : 10
+xtick.labelsize       : 9
+ytick.labelsize       : 9
+legend.fontsize       : 9
+figure.titlesize      : 12
+
+# Okabe-Ito (Wong, Nature Methods) — fixed order, never cycled past 8
+axes.prop_cycle       : cycler('color', ['0072B2', 'D55E00', '009E73', 'CC79A7', 'E69F00', '56B4E9', 'F0E442', '000000'])
+
+axes.spines.top       : False
+axes.spines.right     : False
+axes.linewidth        : 0.8
+axes.grid             : False
+
+xtick.major.width     : 0.8
+ytick.major.width     : 0.8
+xtick.direction       : out
+ytick.direction       : out
+
+lines.linewidth       : 1.5
+lines.markersize      : 5
+errorbar.capsize      : 2
+
+legend.frameon        : False
+legend.handlelength   : 1.5
+
+hist.bins             : 30
+
+# Editable text in vector outputs
+pdf.fonttype          : 42
+svg.fonttype          : none
