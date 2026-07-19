@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { spinner } from '@/components/spinner'
 import { Markdown } from '@/lib/chat/components/markdown'
 import { StreamableValue } from 'ai/rsc'
-import { useStreamableText } from '@/lib/hooks/use-streamable-text'
+import { useSmoothText } from '@/lib/hooks/use-streamable-text'
 import React from 'react'
 import { process_xml } from '@/lib/chat/components/xml'
 
@@ -119,7 +119,7 @@ export function BotMessage({
   header: string
 }) {
   // For streamable content, pass directly to Markdown for animation
-  const rawText = useStreamableText(content).trim()
+  const rawText = useSmoothText(content).trim()
 
   const processedText = process_xml(rawText)
 
