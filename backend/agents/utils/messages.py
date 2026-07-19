@@ -27,13 +27,15 @@ def _mark_cache_control(messages: list[AnyMessage]) -> list[AnyMessage]:
 	# Mark the last 3 suitable messages (4 breakpoints max including the system
 	# one). Successive calls of a lineage re-mark overlapping anchor positions,
 	# keeping cached prefixes byte-identical so reads hit; a single moving
-	# marker would never re-match its own previous position.
+	# marker would never re-match its own previous position. All message types
+	# are anchor-eligible (Vertex honors cache_control on tool_result and
+	# tool-calling assistant text blocks too) - without ToolMessage anchors,
+	# trailing tool results would sit past the last breakpoint and be re-billed
+	# at full price on every call of the lineage.
 	marked = 0
 	for i in range(len(messages) - 1, 0, -1):
 		message = messages[i]
-		if isinstance(message, (HumanMessage, SystemMessage)) or (
-			isinstance(message, AIMessage) and not message.tool_calls
-		):
+		if isinstance(message, (HumanMessage, SystemMessage, ToolMessage, AIMessage)):
 			messages[i] = _marked_copy(message)
 			marked += 1
 			if marked == 3:
