@@ -34,9 +34,19 @@ export function ModelSelector({
         description: 'Most capable model for complex agentic research',
       },
       {
+        id: 'claude-opus-4.7',
+        name: 'Claude Opus 4.7',
+        description: 'Previous-generation Opus with strong agentic capabilities',
+      },
+      {
+        id: 'claude-opus-4.6',
+        name: 'Claude Opus 4.6',
+        description: 'Opus-tier model for advanced reasoning',
+      },
+      {
         id: 'claude-4.6',
-        name: 'Claude 4.6',
-        description: 'Most advanced model with state-of-the-art capabilities',
+        name: 'Claude Sonnet 4.6',
+        description: 'Fast, capable Sonnet-tier model',
       },
     ],
     [],

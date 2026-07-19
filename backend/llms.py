@@ -17,12 +17,20 @@ def load_llm(metadata: dict, **kwargs):
             "temperature": 0.0,
         }
         # Opus 4.7+ rejects temperature/top_p/top_k with a 400 error
-        if model_name == "claude-opus-4.8":
+        if model_name in ("claude-opus-4.8", "claude-opus-4.7"):
             anthropic_model_config.pop("temperature")
 
         model_config = {
             "claude-opus-4.8": {
                 "model_name": "claude-opus-4-8",
+                "max_tokens": 64_000,
+            },
+            "claude-opus-4.7": {
+                "model_name": "claude-opus-4-7",
+                "max_tokens": 64_000,
+            },
+            "claude-opus-4.6": {
+                "model_name": "claude-opus-4-6",
                 "max_tokens": 64_000,
             },
             "claude-4.6": {
@@ -47,12 +55,20 @@ def load_llm(metadata: dict, **kwargs):
             "temperature": 0.0,
         }
         # Opus 4.7+ rejects temperature/top_p/top_k with a 400 error
-        if model_name == "claude-opus-4.8":
+        if model_name in ("claude-opus-4.8", "claude-opus-4.7"):
             google_vertexai_model_config.pop("temperature")
 
         model_config = {
             "claude-opus-4.8": {
                 "model_name": "claude-opus-4-8",
+                "max_output_tokens": 64_000,
+            },
+            "claude-opus-4.7": {
+                "model_name": "claude-opus-4-7",
+                "max_output_tokens": 64_000,
+            },
+            "claude-opus-4.6": {
+                "model_name": "claude-opus-4-6",
                 "max_output_tokens": 64_000,
             },
             "claude-4.6": {
