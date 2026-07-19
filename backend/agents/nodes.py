@@ -68,6 +68,15 @@ def call_specialist(load_llm, tools, pruning_func, state: AgentState):
 		system_messages = specialist_prompt_dict[specialist].invoke({}).messages
 		input_messages = pruning_func([ *system_messages, *historical_messages, *newest_messages ])
 
+		# Claude 4.6+ removed assistant-message prefill: the API rejects requests
+		# whose last message is an assistant turn (400). After an evaluation turn
+		# the workflow ends with the evaluator's AIMessage, so close it with a
+		# user turn instructing the specialist to continue.
+		if input_messages and isinstance(input_messages[-1], AIMessage):
+			input_messages.append(HumanMessage(content="""
+			Continue the task, taking the evaluation feedback above into account.
+			If the task is fully complete, call `evaluation_specialist`."""))
+
 		tags = [specialist]
 		response = llm.bind_tools(
 			tools, tool_choice = { "type": "auto", "disable_parallel_tool_use": True }
@@ -118,6 +127,12 @@ def call_toolset(tools, state: AgentState):
 		assert tool_name in tools_by_name, f"Invalid tool: {tool_name}. Only {list(tools_by_name.keys())} are allowed."
 		required_args = tools_by_name[tool_name].args_schema.schema()["properties"].keys()
 		tool_args = {k: v for k, v in tool_args.items() if k in required_args}
+		# Backfill schema defaults for args the model omitted: langchain>=1.x only
+		# forwards keys present in the original input to _run, so an omitted arg
+		# with a default (e.g. sql_list_table's `query`) raises TypeError.
+		for k, spec in tools_by_name[tool_name].args_schema.schema()["properties"].items():
+			if k not in tool_args and "default" in spec:
+				tool_args[k] = spec["default"]
 		tool_args["state"] = state
 
 		tags = ["toolset", tool_name]
