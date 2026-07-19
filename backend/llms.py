@@ -43,7 +43,7 @@ def load_llm(metadata: dict, **kwargs):
         # Initialise the Model
         google_vertexai_model_config = {
             "project": "ksm-rch-sciscigpt",
-            "location": "us-east5",
+            "location": "global",
             "temperature": 0.0,
         }
         # Opus 4.7+ rejects temperature/top_p/top_k with a 400 error
