@@ -10,7 +10,7 @@ from agents.utils.messages import return_messages
 
 COMPACT_ENABLED = os.getenv("COMPACT_ENABLED", "true").lower() == "true"
 COMPACT_THRESHOLD = float(os.getenv("COMPACT_THRESHOLD", "0.4"))
-COMPACT_CONTEXT_BUDGET_TOKENS = int(os.getenv("COMPACT_CONTEXT_BUDGET_TOKENS", "200000"))
+COMPACT_CONTEXT_BUDGET_TOKENS = int(os.getenv("COMPACT_CONTEXT_BUDGET_TOKENS", "1000000"))
 
 
 def should_compact(state: AgentState) -> bool:
