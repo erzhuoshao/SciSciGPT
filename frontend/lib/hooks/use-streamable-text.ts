@@ -28,8 +28,8 @@ export const useStreamableText = (
 // in a target buffer; a requestAnimationFrame loop reveals the text character
 // by character at an adaptive rate, so rendering flows evenly regardless of
 // how bursty the chunks arrive over the wire.
-const BASE_CPS = 80          // baseline reveal speed, characters per second
-const MAX_LAG_SECONDS = 1.2  // never trail the received text by more than this
+const BASE_CPS = 40          // baseline reveal speed, characters per second
+const MAX_LAG_SECONDS = 0.5  // never trail the received text by more than this
 const DONE_BOOST = 3         // flush faster once the stream has ended
 
 export const useSmoothText = (

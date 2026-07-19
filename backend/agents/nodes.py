@@ -1,4 +1,4 @@
-import json
+import json, os
 from typing import Annotated, Dict, Any, TypedDict, Literal
 
 from langgraph.graph import END, START, StateGraph
@@ -119,6 +119,21 @@ def call_specialist(load_llm, tools, pruning_func, state: AgentState):
 
 
 from func.image import if_message_contains_image
+
+# Per-tool-call evaluation is switchable; visual and task evaluations always run.
+TOOL_EVAL_ENABLED = os.getenv("TOOL_EVAL_ENABLED", "false").lower() == "true"
+
+def _next_after_tool(state: AgentState, visual: bool) -> str:
+	if visual:
+		return "node_evaluation_specialist:visual_eval"
+	if TOOL_EVAL_ENABLED:
+		return "node_evaluation_specialist:tool_eval"
+	# tool_eval disabled: hand the tool result straight back to the specialist
+	task = _extract_task_from_message(state["messages"])
+	if task and task.get("specialist") in specialist_prompt_dict:
+		return f"node_{task['specialist']}"
+	return "node_evaluation_specialist:tool_eval"
+
 def call_toolset(tools, state: AgentState):
 	try:
 		tools_by_name = {tool.name: tool for tool in tools}
@@ -144,14 +159,14 @@ def call_toolset(tools, state: AgentState):
 		tool_message = ToolMessage(content=[{"type": "text", "text": json.dumps(results)}], tool_call_id=tool_call_id, tags=tags)
 
 		visual = if_message_contains_image(tool_message)
-		next = "node_evaluation_specialist:visual_eval" if visual else "node_evaluation_specialist:tool_eval"
+		next = _next_after_tool(state, visual)
 
 	except Exception as e:
 		profile = {"current": "toolset", "name": "call_toolset"}
 
 		results = { "response": "{}: {}".format(type(e).__name__, str(e)) }
 		tool_message = ToolMessage(content=[{"type": "text", "text": json.dumps(results)}], tool_call_id=tool_call_id, tags=["toolset"])
-		next = "node_evaluation_specialist:tool_eval"
+		next = _next_after_tool(state, False)
 
 	return return_messages([tool_message], next=next, **profile)
 
