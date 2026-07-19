@@ -9,13 +9,14 @@ import { getClientInfo } from '@/lib/utils/client-info'
 import { BaseMessage, HumanMessage, ToolMessage } from "@langchain/core/messages";
 import { DoneMarker } from '@/components/done-marker'
 
-import { 
-	render_tool_call_event, 
-	render_tool_response_event, 
-	render_user_message, 
-	render_bot_stream, render_separator, 
+import {
+	render_tool_call_event,
+	render_tool_response_event,
+	render_user_message,
+	render_bot_stream, render_separator,
 	render_event
 } from '@/lib/chat/render'
+import { SystemMessage } from '@/lib/chat/components/message'
 
 import { Separator } from '@/components/ui/separator'
 
@@ -67,6 +68,7 @@ export async function submitUserMessage(
 
 	let textStream: undefined | ReturnType<typeof createStreamableValue<string>>
 	let temp_node: undefined | React.ReactNode
+	let compactUI: undefined | ReturnType<typeof createStreamableUI>
 
 	const streamableUI = createStreamableUI();
 	
@@ -88,6 +90,19 @@ export async function submitUserMessage(
 				// console.log(event)
 				const metadata = event.metadata;
 				
+				// Compaction runs after the answer: suppress its token stream in the
+				// UI and show a transient status line instead (the compacted summary
+				// is stored via on_custom_event but never displayed).
+				if ((event.event === "on_chat_model_stream" || event.event === "on_llm_stream")
+					&& event.metadata?.langgraph_node === "node_compactor") {
+					if (compactUI === undefined) {
+						compactUI = createStreamableUI(
+							<SystemMessage>Compacting conversation history…</SystemMessage>);
+						streamableUI.append(compactUI.value);
+					}
+					continue;
+				}
+
 				if (event.event === "on_chat_model_stream" || event.event === "on_llm_stream") {
 					const delta = event.data.chunk?.content?.[0]?.text ?? event.data.chunk?.content ?? '';
 
@@ -119,6 +134,11 @@ export async function submitUserMessage(
 
 				if (event.event === "on_custom_event") {
 					aiState.update({ ...aiState.get(), messages: [ ...aiState.get().messages, JSON.stringify(event) ] });
+
+					if (event.name === "call_compactor" && compactUI !== undefined) {
+						compactUI.done(<SystemMessage>Context compacted</SystemMessage>);
+						compactUI = undefined;
+					}
 				}
 			}
 
@@ -132,6 +152,7 @@ export async function submitUserMessage(
 		
 		try { aiState.done(aiState.get()) } catch (e: any) { console.error(e) }
 		try { if (textStream !== undefined) { textStream.done() } } catch (e: any) { console.error(e) }
+		try { if (compactUI !== undefined) { compactUI.done(<SystemMessage>Context compacted</SystemMessage>) } } catch (e: any) { console.error(e) }
 		try {
 			streamableUI.done(<DoneMarker />)
 		} catch (e: any) { console.error(e) }

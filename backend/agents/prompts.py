@@ -10,6 +10,7 @@ def _load_prompt(name: str):
 tool_eval_prompt = _load_prompt("sciscigpt-tool-eval")
 visual_eval_prompt = _load_prompt("sciscigpt-visual-eval")
 task_eval_prompt = _load_prompt("sciscigpt-task-eval")
+compactor_prompt = _load_prompt("sciscigpt-compactor")
 
 research_manager_prompt = _load_prompt("sciscigpt_research_manager")
 

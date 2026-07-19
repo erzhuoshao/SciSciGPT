@@ -1,0 +1,48 @@
+{
+ "lc": 1,
+ "type": "constructor",
+ "id": [
+  "langchain",
+  "prompts",
+  "chat",
+  "ChatPromptTemplate"
+ ],
+ "kwargs": {
+  "input_variables": [],
+  "metadata": {
+   "lc_local_variant": "v1-compactor",
+   "lc_local_date": "2026-07-19"
+  },
+  "messages": [
+   {
+    "lc": 1,
+    "type": "constructor",
+    "id": [
+     "langchain",
+     "prompts",
+     "chat",
+     "HumanMessagePromptTemplate"
+    ],
+    "kwargs": {
+     "prompt": {
+      "lc": 1,
+      "type": "constructor",
+      "id": [
+       "langchain",
+       "prompts",
+       "prompt",
+       "PromptTemplate"
+      ],
+      "kwargs": {
+       "input_variables": [],
+       "template": "<system>\n<task>\nThe conversation above has grown long. Produce a compaction summary that will REPLACE everything above as the ResearchManager's starting context for future turns. Anything not captured here is lost, so: references must be exact and verbatim; everything else must be brief.\n</task>\n<instructions>\nOutput exactly one block in this format and nothing else:\n<compaction_summary>\n    <conversation_digest>The user's goals, the questions asked so far (one line each), and any standing constraints or preferences.</conversation_digest>\n    <task_digests>One line per completed task: objective, specialist, outcome with key numbers.</task_digests>\n    <deliverables_ledger>Copy VERBATIM every deliverable reference from the handoffs and reports above: absolute file paths with schema and row counts, figure download links (prefer https URLs over sandbox paths), table names, entity ids. Never paraphrase, never drop an entry.</deliverables_ledger>\n    <open_threads>Unresolved questions or pending follow-ups; write \"none\" if empty.</open_threads>\n</compaction_summary>\n</instructions>\n</system>",
+       "template_format": "f-string"
+      },
+      "name": "PromptTemplate"
+     }
+    }
+   }
+  ]
+ },
+ "name": "ChatPromptTemplate"
+}

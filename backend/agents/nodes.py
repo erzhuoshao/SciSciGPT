@@ -8,7 +8,7 @@ from agents.prompts import research_manager_prompt, specialist_prompt_dict
 from agents.utils.agent_state import AgentState
 from agents.utils.messages import _extract_task_from_message, _extract_workflows_from_messages, _format_workflow
 from agents.utils.messages import _remove_xml_tags_from_messages, _extract_xml_tags_from_text
-from agents.utils.messages import _filter_rm_visible_messages, _mark_cache_control
+from agents.utils.messages import _filter_rm_visible_messages, _mark_cache_control, _apply_compaction
 
 from agents.utils.messages import return_messages
 
@@ -27,7 +27,7 @@ def call_research_manager(load_llm, tools, pruning_func, state: AgentState):
 
 		input_messages = pruning_func([
 			*research_manager_prompt.invoke({}).messages,
-			*_remove_xml_tags_from_messages(_filter_rm_visible_messages(state['messages']), ["thinking"]),
+			*_remove_xml_tags_from_messages(_filter_rm_visible_messages(_apply_compaction(state['messages'])), ["thinking"]),
 			human_message
 		])
 
@@ -61,7 +61,7 @@ def call_specialist(load_llm, tools, pruning_func, state: AgentState):
 	try:
 		llm = load_llm(state["metadata"], disable_streaming=False)
 		
-		workflows = _extract_workflows_from_messages(state["messages"], specialist, newest=False)
+		workflows = _extract_workflows_from_messages(_apply_compaction(state["messages"]), specialist, newest=False)
 		historical_workflows, newest_workflow = workflows[:-1], workflows[-1]
 		historical_workflows = [_format_workflow(w) for w in historical_workflows]
 		historical_messages = [m for w in historical_workflows for m in w] if memory else []

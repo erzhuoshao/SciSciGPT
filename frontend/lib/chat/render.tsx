@@ -211,6 +211,11 @@ export function render_event(event: any) {
 		return render_user_message(message)
 	}
 
+	// Compaction summaries are stored for replay but never displayed.
+	if (name === "call_compactor") {
+		return null
+	}
+
 	if (name === "call_research_manager") {
 		return render_ai_message(messages[0].kwargs, format_name(current))
 	}

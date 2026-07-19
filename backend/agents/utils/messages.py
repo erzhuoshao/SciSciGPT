@@ -119,6 +119,18 @@ def _extract_workflows_from_messages(messages: list[AnyMessage], specialist: str
 		return workflows
 
 
+def _apply_compaction(messages: list[AnyMessage]) -> list[AnyMessage]:
+	"""If the history contains compaction summaries, start from the newest one:
+	[newest compaction message, *everything after it]. The summary replaces all
+	earlier context; older messages stay in the store but never re-enter LLM
+	inputs."""
+	for i in range(len(messages) - 1, -1, -1):
+		metadata = getattr(messages[i], "metadata", None) or {}
+		if metadata.get("current") == "compaction":
+			return messages[i:]
+	return messages
+
+
 def _filter_rm_visible_messages(messages: list[AnyMessage]) -> list[AnyMessage]:
 	"""ResearchManager context: user dialogue, its own turns, delegation
 	acknowledgements, each task's final handoff message, and task evaluation

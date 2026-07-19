@@ -4,7 +4,7 @@ import json
 from agents.nodes import AgentState
 from agents.prompts import tool_eval_prompt, visual_eval_prompt, task_eval_prompt
 from agents.utils.messages import _extract_task_from_message, _extract_workflows_from_messages, _format_workflow
-from agents.utils.messages import _extract_xml_tags_from_text
+from agents.utils.messages import _extract_xml_tags_from_text, _apply_compaction
 
 from agents.utils.images import _multimodal_message
 from agents.utils.messages import return_messages
@@ -27,7 +27,7 @@ async def call_evaluation(load_llm, specialists, pruning_func, state: AgentState
 	task = _extract_task_from_message(state["messages"])
 	specialist, task, memory = task["specialist"], task["task"], task["memory"]
 
-	workflows = _extract_workflows_from_messages(state["messages"], specialist, newest=False)
+	workflows = _extract_workflows_from_messages(_apply_compaction(state["messages"]), specialist, newest=False)
 	workflows = [_format_workflow(w) for w in workflows]
 	historical_workflows, newest_workflow = workflows[:-1], workflows[-1]
 	historical_messages = [m for w in historical_workflows for m in w] if memory else []
