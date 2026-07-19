@@ -28,15 +28,6 @@ def load_llm(metadata: dict, **kwargs):
             "claude-4.6": {
                 "model_name": "claude-sonnet-4-6"
             },
-            "claude-4.5": {
-                "model_name": "claude-sonnet-4-5-20250929"
-            },
-            "claude-4.0": {
-                "model_name": "claude-sonnet-4-20250514"
-            },
-            "claude-3.7": {
-                "model_name": "claude-3-7-sonnet-20250219"
-            },
         }
 
         if model_name not in model_config:
@@ -68,18 +59,6 @@ def load_llm(metadata: dict, **kwargs):
                 "model_name": "claude-sonnet-4-6",
                 "max_output_tokens": 64_000,
             },
-            "claude-4.5": {
-                "model_name": "claude-sonnet-4-5@20250929",
-                "max_output_tokens": 64_000,
-            },
-            "claude-4.0": {
-                "model_name": "claude-sonnet-4@20250514",
-                "max_output_tokens": 64_000,
-            },
-            "claude-3.7": {
-                "model_name": "claude-3-7-sonnet@20250219",
-                "max_output_tokens": 64_000,
-            }
         }
 
         if model_name not in model_config:
