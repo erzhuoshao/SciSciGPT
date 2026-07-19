@@ -121,9 +121,6 @@ def __search_and_format__(
 		section_id: int=None, venue=None
 	):
 	filter_conditions = []
-	if authors:
-		for author in authors:
-			filter_conditions.append({f"author: {author}": {"$exists": True}})
 	if section_category and section_category != "All":
 		filter_conditions.append({"section_category": section_category})
 	if min_year:
@@ -133,23 +130,39 @@ def __search_and_format__(
 	if url:
 		filter_conditions.append({"url": url})
 	if section_id:
-		filter_conditions.append({"section_id": section_id})
+		# the corpus stores section_id as a number
+		filter_conditions.append({"section_id": float(section_id)})
 	if paper_title:
 		filter_conditions.append({"paper_title": paper_title})
 	if venue:
-		filter_conditions.append({"venue": venue})
+		# the corpus has no `venue` key: journal articles carry `journaltitle`
+		# (and `shortjournal`), books/reports carry `publisher`
+		filter_conditions.append({"$or": [
+			{"journaltitle": venue}, {"shortjournal": venue}, {"publisher": venue}]})
 	filter_query = {"$and": filter_conditions} if filter_conditions else None
-	
+
 	if type(search_keywords) == str:
 		search_keywords = [search_keywords]
 
+	# Author matching happens post-retrieval (tolerant), so fetch more first
+	k_fetch = k * 3 if authors else k
+
 	df = []
 	for search_keyword in search_keywords:
-		output = PVS.similarity_search(search_keyword, filter=filter_query, k=k, namespace=sciscicorpus_namespace)
+		output = PVS.similarity_search(search_keyword, filter=filter_query, k=k_fetch, namespace=sciscicorpus_namespace)
 		df_temp = pd.DataFrame([i.metadata | {'text': i.page_content} for i in output])
 		# df_temp.authors = df_temp.authors.apply(lambda x: ', '.join(x[:-1]) + ', and ' + x[-1] if len(x) > 1 else x[0])
 		df.append(df_temp)
 	df = pd.concat(df, ignore_index=True)
+
+	if authors and df.shape[0] > 0 and "author" in df.columns:
+		# Tolerant author filter: every token of a requested name must appear in
+		# the chunk's author string (case-insensitive), so partial names like
+		# "James Evans" match the stored "James A. Evans".
+		def _author_match(author_string):
+			s = str(author_string).lower()
+			return any(all(tok in s for tok in a.lower().split()) for a in authors)
+		df = df[df["author"].apply(_author_match)]
 	
 	if df.shape[0] > 0:
 		df = df.sort_values(['url', 'section_id'])
@@ -178,12 +191,12 @@ class SearchConstraints(BaseModel):
 		description="Filter results to only include sections from a specific URL")
 	paper_title: Optional[str] = Field(None, 
 		description="Filter results to only include sections from a specific paper title")
-	authors: Optional[list[str]] = Field(None, 
-		description="Filter results to only include papers written by any of these authors")
-	section_id: Optional[str] = Field(None, 
-		description="Filter results to only include a specific section ID from papers")
-	venue: Optional[str] = Field(None, 
-		description="Filter results to only include papers published in a specific venue/journal")
+	authors: Optional[list[str]] = Field(None,
+		description="Filter results to only include papers written by any of these authors (partial names are matched tolerantly)")
+	section_id: Optional[int] = Field(None,
+		description="Filter results to only include a specific numeric section ID from papers")
+	venue: Optional[str] = Field(None,
+		description="Filter results to only include papers published in a specific journal (exact journal name, e.g. `Nature`) or book publisher")
 
 ConstraintTemplate = ChatPromptTemplate([
 	("system", """You are an AI assistant specializing in creating search constraints for a literature search."""),
