@@ -8,6 +8,7 @@ from agents.utils.messages import _extract_xml_tags_from_text
 
 from agents.utils.images import _multimodal_message
 from agents.utils.messages import return_messages
+from agents.utils.messages import _mark_cache_control
 
 
 async def call_evaluation(load_llm, specialists, pruning_func, state: AgentState):
@@ -53,7 +54,7 @@ async def tool_evaluation(model, input_messages):
 	system_message = HumanMessage(content=tool_eval_prompt.invoke({}).messages[0].content)
 
 	tags = ["node_evaluation_specialist", "tool_eval"]
-	response = await model.ainvoke( [*input_messages, system_message], config={"tags": tags} )
+	response = await model.ainvoke( _mark_cache_control([*input_messages, system_message]), config={"tags": tags} )
 	response.tags = tags
 	
 	response.tool_calls = []
@@ -64,7 +65,7 @@ async def visual_evaluation(model, input_messages):
 	system_message = HumanMessage(content=visual_eval_prompt.invoke({}).messages[0].content)
 
 	tags = ["node_evaluation_specialist", "visual_eval"]
-	response = await model.ainvoke( [input_messages[0], _multimodal_message(input_messages[-1]), system_message], config={"tags": tags} )
+	response = await model.ainvoke( _mark_cache_control([input_messages[0], _multimodal_message(input_messages[-1]), system_message]), config={"tags": tags} )
 	response.tags = tags
 
 	response.tool_calls = []
@@ -77,7 +78,7 @@ async def task_evaluation(model, input_messages):
 	system_message = HumanMessage(content=task_eval_prompt.invoke({}).messages[0].content)
 	
 	tags = ["node_evaluation_specialist", "task_eval"]
-	response = await model.ainvoke( [*input_messages, system_message], config={"tags": tags} )
+	response = await model.ainvoke( _mark_cache_control([*input_messages, system_message]), config={"tags": tags} )
 	response.tags = tags
 
 	response.tool_calls = []

@@ -1,6 +1,44 @@
-from langchain_core.messages import HumanMessage, AIMessage, AnyMessage, ToolMessage
+from langchain_core.messages import HumanMessage, AIMessage, AnyMessage, ToolMessage, SystemMessage
 from copy import deepcopy
 import re
+
+
+def _mark_cache_control(messages: list[AnyMessage]) -> list[AnyMessage]:
+	"""Return a copy of the message list with ephemeral cache_control markers on
+	(a) the leading system message and (b) the last Human/AI/System message, so
+	the full growing prefix is cached across successive calls of the same
+	lineage. Marked messages are copies - the originals (persisted into graph
+	state and the frontend event stream) are never mutated."""
+	def _marked_copy(message):
+		copy = message.model_copy(deep=True)
+		content = copy.content
+		if isinstance(content, str):
+			copy.content = [{"type": "text", "text": content, "cache_control": {"type": "ephemeral"}}]
+		elif isinstance(content, list):
+			for block in reversed(content):
+				if isinstance(block, dict) and block.get("type") == "text":
+					block["cache_control"] = {"type": "ephemeral"}
+					break
+		return copy
+
+	messages = list(messages)
+	if messages and isinstance(messages[0], SystemMessage):
+		messages[0] = _marked_copy(messages[0])
+	# Mark the last 3 suitable messages (4 breakpoints max including the system
+	# one). Successive calls of a lineage re-mark overlapping anchor positions,
+	# keeping cached prefixes byte-identical so reads hit; a single moving
+	# marker would never re-match its own previous position.
+	marked = 0
+	for i in range(len(messages) - 1, 0, -1):
+		message = messages[i]
+		if isinstance(message, (HumanMessage, SystemMessage)) or (
+			isinstance(message, AIMessage) and not message.tool_calls
+		):
+			messages[i] = _marked_copy(message)
+			marked += 1
+			if marked == 3:
+				break
+	return messages
 
 
 

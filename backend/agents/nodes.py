@@ -8,7 +8,7 @@ from agents.prompts import research_manager_prompt, specialist_prompt_dict
 from agents.utils.agent_state import AgentState
 from agents.utils.messages import _extract_task_from_message, _extract_workflows_from_messages, _format_workflow
 from agents.utils.messages import _remove_xml_tags_from_messages, _extract_xml_tags_from_text
-from agents.utils.messages import _filter_rm_visible_messages
+from agents.utils.messages import _filter_rm_visible_messages, _mark_cache_control
 
 from agents.utils.messages import return_messages
 
@@ -33,10 +33,10 @@ def call_research_manager(load_llm, tools, pruning_func, state: AgentState):
 
 		tags = ["node_research_manager"]
 		response = llm.bind_tools(
-			list(tools_by_name.values()), 
+			list(tools_by_name.values()),
 			tool_choice = { "type": "auto", "disable_parallel_tool_use": True }
 		).invoke(
-			input_messages, config={"tags": tags}
+			_mark_cache_control(input_messages), config={"tags": tags}
 		)
 		response.tags = tags
 
@@ -83,7 +83,7 @@ def call_specialist(load_llm, tools, pruning_func, state: AgentState):
 		tags = [specialist]
 		response = llm.bind_tools(
 			tools, tool_choice = { "type": "auto", "disable_parallel_tool_use": True }
-		).invoke( input_messages, config={ "tags": tags } )
+		).invoke( _mark_cache_control(input_messages), config={ "tags": tags } )
 		response.content = response.text
 		response.tags = tags
 
