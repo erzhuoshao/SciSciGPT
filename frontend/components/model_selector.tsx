@@ -38,21 +38,6 @@ export function ModelSelector({
         name: 'Claude 4.6',
         description: 'Most advanced model with state-of-the-art capabilities',
       },
-      {
-        id: 'claude-4.5',
-        name: 'Claude 4.5',
-        description: 'Latest generation with enhanced performance',
-      },
-      {
-        id: 'claude-4.0',
-        name: 'Claude 4.0',
-        description: 'Advanced model with superior capabilities',
-      },
-      {
-        id: 'claude-3.7',
-        name: 'Claude 3.7',
-        description: 'Enhanced model with improved reasoning',
-      },
     ],
     [],
   );
