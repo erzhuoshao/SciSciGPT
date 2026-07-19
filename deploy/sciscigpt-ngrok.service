@@ -1,0 +1,25 @@
+[Unit]
+Description=SciSciGPT ngrok Tunnel
+After=network.target sciscigpt-frontend.service
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=shaoerzhuo
+Group=shaoerzhuo
+Environment=HOME=/home/shaoerzhuo
+Environment=PATH=/home/shaoerzhuo/anaconda3/envs/sciscigpt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+ExecStart=/home/shaoerzhuo/anaconda3/envs/sciscigpt/bin/ngrok http --url=sciscigpt.ngrok.app 3000
+
+Restart=on-failure
+RestartSec=10
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sciscigpt-ngrok
+
+[Install]
+WantedBy=multi-user.target

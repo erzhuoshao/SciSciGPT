@@ -1,13 +1,20 @@
-from langchain.hub import pull
+import json, os
+from langchain_core.load import load
 
-tool_eval_prompt = pull("erzhuoshao/sciscigpt-tool-eval:3452c5e1")
-visual_eval_prompt = pull("erzhuoshao/sciscigpt-visual-eval:4be9277a")
-task_eval_prompt = pull("erzhuoshao/sciscigpt-task-eval:7d5d09e8")
+_prompts_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "prompts")
 
-research_manager_prompt = pull("erzhuoshao/sciscigpt_research_manager:84e9c6d5")
+def _load_prompt(name: str):
+    with open(os.path.join(_prompts_dir, f"{name}.json")) as f:
+        return load(json.load(f))
+
+tool_eval_prompt = _load_prompt("sciscigpt-tool-eval")
+visual_eval_prompt = _load_prompt("sciscigpt-visual-eval")
+task_eval_prompt = _load_prompt("sciscigpt-task-eval")
+
+research_manager_prompt = _load_prompt("sciscigpt_research_manager")
 
 specialist_prompt_dict = {
-    "literature_specialist": pull("erzhuoshao/sciscigpt_literature_specialist:c61f1f4f"),
-    "database_specialist": pull("erzhuoshao/sciscigpt_database_specialist:7a63ad88"),
-    "analytics_specialist": pull("erzhuoshao/sciscigpt_analytics_specialist:ec0aefe0"),
+    "literature_specialist": _load_prompt("sciscigpt_literature_specialist"),
+    "database_specialist": _load_prompt("sciscigpt_database_specialist"),
+    "analytics_specialist": _load_prompt("sciscigpt_analytics_specialist"),
 }

@@ -1,0 +1,143 @@
+{
+  "lc": 1,
+  "type": "constructor",
+  "id": [
+    "langchain",
+    "prompts",
+    "chat",
+    "ChatPromptTemplate"
+  ],
+  "kwargs": {
+    "input_variables": [
+      "format_instructions",
+      "query",
+      "search_results"
+    ],
+    "metadata": {
+      "lc_hub_owner": "erzhuoshao",
+      "lc_hub_repo": "sciscigpt_literature_specialist_hyde_post",
+      "lc_hub_commit_hash": "f490936c4c2ef746c10efb8e3e8637c5663272848f5bff1c9a026546866d235b"
+    },
+    "messages": [
+      {
+        "lc": 1,
+        "type": "constructor",
+        "id": [
+          "langchain",
+          "prompts",
+          "chat",
+          "SystemMessagePromptTemplate"
+        ],
+        "kwargs": {
+          "prompt": {
+            "lc": 1,
+            "type": "constructor",
+            "id": [
+              "langchain",
+              "prompts",
+              "prompt",
+              "PromptTemplate"
+            ],
+            "kwargs": {
+              "input_variables": [],
+              "template": "Provide the summary in this XML format. You are strictly banned from generating anything beyond this XML format:\n<literature_review>\n    <thinking>\n        Your detailed reasoning here. Enclose all detailed reasoning within this tag. Within this tag, you need to:\n        1. Identify and assess each paper's relevance to the specific user query. You must clearly identify all search constraints, including publication time, venue, authors, affiliation, etc. You must clearly exclude papers that don't directly address the research question or fall outside the specified constraints. Then list the selected papers. Your selected papers must be strictly within the scope of the requirement.\n        2. Synthesize the information into a coherent, academic paragraph following literature review conventions. Highlight key findings, group related research, contrast different perspectives, and maintain an objective, analytical tone throughout. Comprehensively answer the user query by a literature review while using in-text citations [id] to cite requested papers, as in standard literature reviews.\n    </thinking>\n    <references>\n        <reference>\n            <id>INTEGER: 1, 2, 3, ...</id>\n            <ref>STRING: reference with all required information</ref>\n            <url>STRING: the URL of the paper</url>\n        </reference>\n        <!-- ... additional references ... -->\n        <!-- Each paper should only appear once in the list. The reference ID should start with [1] and increment by 1 for each additional reference. -->\n    </references>\n    <summary>Your detailed literature review paragraph here, using [id] for citations.</summary>\n</literature_review>",
+              "template_format": "f-string"
+            },
+            "name": "PromptTemplate"
+          }
+        }
+      },
+      {
+        "lc": 1,
+        "type": "constructor",
+        "id": [
+          "langchain",
+          "prompts",
+          "chat",
+          "HumanMessagePromptTemplate"
+        ],
+        "kwargs": {
+          "prompt": {
+            "lc": 1,
+            "type": "constructor",
+            "id": [
+              "langchain",
+              "prompts",
+              "prompt",
+              "PromptTemplate"
+            ],
+            "kwargs": {
+              "input_variables": [
+                "query"
+              ],
+              "template": "{query}",
+              "template_format": "f-string"
+            },
+            "name": "PromptTemplate"
+          }
+        }
+      },
+      {
+        "lc": 1,
+        "type": "constructor",
+        "id": [
+          "langchain",
+          "prompts",
+          "chat",
+          "AIMessagePromptTemplate"
+        ],
+        "kwargs": {
+          "prompt": {
+            "lc": 1,
+            "type": "constructor",
+            "id": [
+              "langchain",
+              "prompts",
+              "prompt",
+              "PromptTemplate"
+            ],
+            "kwargs": {
+              "input_variables": [
+                "search_results"
+              ],
+              "template": "Search results based on user requirements:\n{search_results}",
+              "template_format": "f-string"
+            },
+            "name": "PromptTemplate"
+          }
+        }
+      },
+      {
+        "lc": 1,
+        "type": "constructor",
+        "id": [
+          "langchain",
+          "prompts",
+          "chat",
+          "HumanMessagePromptTemplate"
+        ],
+        "kwargs": {
+          "prompt": {
+            "lc": 1,
+            "type": "constructor",
+            "id": [
+              "langchain",
+              "prompts",
+              "prompt",
+              "PromptTemplate"
+            ],
+            "kwargs": {
+              "input_variables": [
+                "format_instructions"
+              ],
+              "template": "{format_instructions}",
+              "template_format": "f-string"
+            },
+            "name": "PromptTemplate"
+          }
+        }
+      }
+    ]
+  },
+  "name": "ChatPromptTemplate"
+}

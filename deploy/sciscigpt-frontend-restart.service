@@ -1,0 +1,6 @@
+[Unit]
+Description=Restart SciSciGPT Frontend
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl restart sciscigpt-frontend.service

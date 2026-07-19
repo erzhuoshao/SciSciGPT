@@ -29,8 +29,19 @@ export function ApiKeyDialog({ accessInfo }: { accessInfo?: AccessInfo }) {
 
   const remaining = useMemo(() => {
     if (!accessInfo) return 0
-    return Math.max(0, accessInfo.dailyLimit - accessInfo.dailyCount)
+    return Math.max(0, accessInfo.limit - accessInfo.usageCount)
   }, [accessInfo])
+
+  const limitPeriodLabel = useMemo(() => {
+    switch (accessInfo?.limitPeriod) {
+      case 'week':
+        return { per: 'per week', window: 'this week' }
+      case 'month':
+        return { per: 'per month', window: 'this month' }
+      default:
+        return { per: 'per day', window: 'today' }
+    }
+  }, [accessInfo?.limitPeriod])
 
   useEffect(() => {
     if (hasLocalKey) {
@@ -88,8 +99,8 @@ export function ApiKeyDialog({ accessInfo }: { accessInfo?: AccessInfo }) {
           {accessInfo?.limitsEnabled ? (
             <DialogDescription>
               Add your key to unlock unlimited conversations. Without a key you can
-              ask up to {accessInfo?.dailyLimit ?? 5} questions per day; you have {remaining}{' '}
-              left today.
+              ask up to {accessInfo?.limit ?? 5} questions {limitPeriodLabel.per}; you have{' '}
+              {remaining} left {limitPeriodLabel.window}.
             </DialogDescription>
           ) : (
             <DialogDescription>

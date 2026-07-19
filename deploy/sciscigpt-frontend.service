@@ -1,0 +1,32 @@
+[Unit]
+Description=SciSciGPT Frontend (Next.js)
+After=network.target sciscigpt-backend.service
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=shaoerzhuo
+Group=shaoerzhuo
+WorkingDirectory=/home/shaoerzhuo/SciSciGPT/frontend
+Environment=PATH=/home/shaoerzhuo/anaconda3/envs/sciscigpt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=HOME=/home/shaoerzhuo
+Environment=NODE_ENV=production
+Environment=CONDA_DEFAULT_ENV=sciscigpt
+Environment=CONDA_PREFIX=/home/shaoerzhuo/anaconda3/envs/sciscigpt
+
+ExecStartPre=/home/shaoerzhuo/anaconda3/envs/sciscigpt/bin/pnpm build
+ExecStart=/home/shaoerzhuo/anaconda3/envs/sciscigpt/bin/pnpm start --port 3000
+
+TimeoutStartSec=300
+
+Restart=on-failure
+RestartSec=10
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sciscigpt-frontend
+
+[Install]
+WantedBy=multi-user.target

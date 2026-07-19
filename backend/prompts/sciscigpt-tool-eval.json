@@ -1,0 +1,49 @@
+{
+  "lc": 1,
+  "type": "constructor",
+  "id": [
+    "langchain",
+    "prompts",
+    "chat",
+    "ChatPromptTemplate"
+  ],
+  "kwargs": {
+    "input_variables": [],
+    "metadata": {
+      "lc_hub_owner": "erzhuoshao",
+      "lc_hub_repo": "sciscigpt-tool-eval",
+      "lc_hub_commit_hash": "3452c5e11105338c53b0894d8dd21463ef4dbf9525f731648e3a197db2efb9a3"
+    },
+    "messages": [
+      {
+        "lc": 1,
+        "type": "constructor",
+        "id": [
+          "langchain",
+          "prompts",
+          "chat",
+          "HumanMessagePromptTemplate"
+        ],
+        "kwargs": {
+          "prompt": {
+            "lc": 1,
+            "type": "constructor",
+            "id": [
+              "langchain",
+              "prompts",
+              "prompt",
+              "PromptTemplate"
+            ],
+            "kwargs": {
+              "input_variables": [],
+              "template": "<system>\n<task>\nBased on the above, your task is to evaluate the newest tool call using the following steps.\n</task>\n<instructions>\nAssign a quality score for the newest tool call between 0.0 and 1.0 using the <reward> tag:\n   - 0.8+: Continue current approach\n   - 0.5-0.7: Consider minor adjustments\n   - Below 0.5: Seriously consider backtracking and trying a different approach\nOnly if the reward score is low:\n   - briefly explain your decision within <reflection> tags\n</instructions>\n<restrictions>\nYou must strictly follow the above format. The response must only include <reward> and (if needed) <reflection> tags.\n</restrictions>\n</system>\n",
+              "template_format": "f-string"
+            },
+            "name": "PromptTemplate"
+          }
+        }
+      }
+    ]
+  },
+  "name": "ChatPromptTemplate"
+}

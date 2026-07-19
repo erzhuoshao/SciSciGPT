@@ -32,6 +32,22 @@ export function ChatPanel({
 	const [aiState] = useAIState()
 	const [messages] = useUIState()
 	const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
+	const limitPeriodLabel =
+		accessInfo?.limitPeriod === 'week'
+			? 'per week'
+			: accessInfo?.limitPeriod === 'month'
+				? 'per month'
+				: 'per day'
+	const remainingWindowLabel =
+		accessInfo?.limitPeriod === 'week'
+			? 'this week'
+			: accessInfo?.limitPeriod === 'month'
+				? 'this month'
+				: 'today'
+	const remaining =
+		typeof accessInfo?.usageCount === 'number'
+			? Math.max(0, (accessInfo?.limit ?? 0) - accessInfo.usageCount)
+			: undefined
 
 	const exampleMessages = [
 		{
@@ -112,16 +128,10 @@ export function ChatPanel({
 				<div className="space-y-4 border-t bg-background px-4 py-2 shadow-lg sm:rounded-t-xl sm:border md:py-4">
 					{accessInfo?.limitsEnabled && !accessInfo?.hasAnthropicKey && (
 						<div className="text-xs text-muted-foreground px-1">
-							Free tier: {accessInfo?.dailyLimit ?? 5} questions/day.{' '}
-							{typeof accessInfo?.dailyCount === 'number' && (
-								<>
-									{Math.max(
-										0,
-										(accessInfo?.dailyLimit ?? 5) - accessInfo.dailyCount
-									)}{' '}
-									left today.
-								</>
-							)}{' '}
+							Free tier: {accessInfo?.limit ?? 5} questions {limitPeriodLabel}.{' '}
+							{typeof remaining === 'number' && (
+								<>{remaining} left {remainingWindowLabel}. </>
+							)}
 							Add your Anthropic API key in{' '}
 							<a href="/settings" className="underline font-semibold">
 								Settings

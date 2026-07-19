@@ -1,0 +1,49 @@
+{
+  "lc": 1,
+  "type": "constructor",
+  "id": [
+    "langchain",
+    "prompts",
+    "chat",
+    "ChatPromptTemplate"
+  ],
+  "kwargs": {
+    "input_variables": [],
+    "metadata": {
+      "lc_hub_owner": "erzhuoshao",
+      "lc_hub_repo": "sciscigpt-task-eval",
+      "lc_hub_commit_hash": "7d5d09e8c60b1d9cd1e7fb4c33cc74f2e5c62ab13b3c39061ae382568cf36bc3"
+    },
+    "messages": [
+      {
+        "lc": 1,
+        "type": "constructor",
+        "id": [
+          "langchain",
+          "prompts",
+          "chat",
+          "HumanMessagePromptTemplate"
+        ],
+        "kwargs": {
+          "prompt": {
+            "lc": 1,
+            "type": "constructor",
+            "id": [
+              "langchain",
+              "prompts",
+              "prompt",
+              "PromptTemplate"
+            ],
+            "kwargs": {
+              "input_variables": [],
+              "template": "<system>\n<task>\nAnalyze the above task accomplishment workflow and provide a comprehensive reflection.\n</task>\n<instructions>\nBegin by enclosing all thoughts inside <thinking> tags. In this section:\n   - Break down the task into key components and requirements\n   - List potential approaches or methodologies applied to the task\n   - Identify key performance indicators and metrics used in the task\n   - Explore multiple angles and approaches to the problem\n   - Show all calculations and intermediate steps explicitly\n   - Record any adjustments made during the execution\n   - Note challenges encountered and solutions attempted\n   - Track resource usage and optimization efforts\n   - Compare the approach used to best practices in the field\n   - Use <thinking> as a scratchpad to write out all calculations and reasoning explicitly.\n\nProvide a clear and concise execution report within <report> tags. This report should:\n   - synthesize your thoughts and observations into a coherent summary of the task accomplishment process.\n   - Identify key components, critical steps, methodological choices, and key outcomes of the task.\n\nAssign a final reward score for the task accomplishment between 0.0 and 1.0 using <reward> tags:\n   - 0.8+: Continue current approach\n   - 0.5-0.7: Consider minor adjustments\n   - Below 0.5: Seriously consider backtracking and trying a different approach\nJustify your score very briefly within <thinking> tags.\n</instructions>\n</system>\n",
+              "template_format": "f-string"
+            },
+            "name": "PromptTemplate"
+          }
+        }
+      }
+    ]
+  },
+  "name": "ChatPromptTemplate"
+}

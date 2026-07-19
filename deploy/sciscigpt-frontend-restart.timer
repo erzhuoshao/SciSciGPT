@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily restart timer for SciSciGPT Frontend
+
+[Timer]
+OnCalendar=*-*-* 00:00:00
+Persistent=true
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target

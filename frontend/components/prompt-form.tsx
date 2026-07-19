@@ -22,8 +22,8 @@ import { toast } from 'sonner'
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-const DEFAULT_MODEL_ID = 'claude-4.0'
-const ALLOWED_MODEL_IDS = new Set(['claude-3.7', 'claude-4.0'])
+const DEFAULT_MODEL_ID = 'claude-4.6'
+const ALLOWED_MODEL_IDS = new Set(['claude-3.7', 'claude-4.0', 'claude-4.5', 'claude-4.6'])
 
 
 export function PromptForm({

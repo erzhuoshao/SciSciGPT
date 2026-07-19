@@ -1,0 +1,28 @@
+[Unit]
+Description=SciSciGPT Backend (FastAPI/Uvicorn)
+After=network.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=shaoerzhuo
+Group=shaoerzhuo
+WorkingDirectory=/home/shaoerzhuo/SciSciGPT/backend
+Environment=PATH=/home/shaoerzhuo/anaconda3/envs/sciscigpt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=HOME=/home/shaoerzhuo
+Environment=CONDA_DEFAULT_ENV=sciscigpt
+Environment=CONDA_PREFIX=/home/shaoerzhuo/anaconda3/envs/sciscigpt
+
+ExecStart=/home/shaoerzhuo/anaconda3/envs/sciscigpt/bin/uvicorn app:app --host 0.0.0.0 --port 8080 --env-file .env
+
+Restart=on-failure
+RestartSec=10
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sciscigpt-backend
+
+[Install]
+WantedBy=multi-user.target

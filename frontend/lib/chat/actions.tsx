@@ -29,7 +29,7 @@ const remoteChain = new RemoteRunnable({
 export async function submitUserMessage(
 	content: string, 
 	fileList: any[] = [], 
-	selectedModelId: string = 'claude-4.0',
+	selectedModelId: string = 'claude-4.6',
 	userApiKey?: string
 ) {
 	'use server'
@@ -40,7 +40,7 @@ export async function submitUserMessage(
 		aiState.update({ ...aiState.get(), title: content.substring(0, 100) ?? "Test" })
 	}
 	
-	const model_name = selectedModelId ?? 'claude-4.0'
+	const model_name = selectedModelId ?? 'claude-4.6'
 	
 	const session_id = aiState.get().chatId
 	const db_name = "SciSciNet_US_V4"

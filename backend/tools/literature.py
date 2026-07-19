@@ -7,9 +7,16 @@ from langgraph.prebuilt import InjectedState
 import pandas as pd
 import re, os
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.hub import pull
-HyDE_pre_retrieval_xml = pull("erzhuoshao/sciscigpt_literature_specialist_hyde_pre")
-HyDE_post_retrieval_xml = pull("erzhuoshao/sciscigpt_literature_specialist_hyde_post")
+import json as _json
+from langchain_core.load import load as _load_lc
+
+def _load_prompt(name: str):
+    _dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "prompts")
+    with open(os.path.join(_dir, f"{name}.json")) as f:
+        return _load_lc(_json.load(f))
+
+HyDE_pre_retrieval_xml = _load_prompt("sciscigpt_literature_specialist_hyde_pre")
+HyDE_post_retrieval_xml = _load_prompt("sciscigpt_literature_specialist_hyde_post")
 
 sciscicorpus_index = os.getenv("SCISCICORPUS_INDEX")
 sciscicorpus_namespace = os.getenv("SCISCICORPUS_NAMESPACE")

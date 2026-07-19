@@ -6,10 +6,11 @@ import { AccessInfo, SettingsSnapshot, User } from '@/lib/types'
 import { getStringFromBuffer } from '@/lib/utils'
 import { kv } from '@vercel/kv'
 
-const DAILY_FREE_QUESTION_LIMIT_ENABLED = getDailyFreeQuestionLimitEnabled()
-const DAILY_FREE_QUESTION_LIMIT = DAILY_FREE_QUESTION_LIMIT_ENABLED
-  ? getDailyFreeQuestionLimit()
-  : 0
+type LimitPeriod = 'day' | 'week' | 'month'
+
+const FREE_QUESTION_LIMIT_ENABLED = getFreeQuestionLimitEnabled()
+const FREE_QUESTION_LIMIT_PERIOD = getFreeQuestionLimitPeriod()
+const FREE_QUESTION_LIMIT = FREE_QUESTION_LIMIT_ENABLED ? getFreeQuestionLimit() : 0
 
 type UserSettingsRecord = {
   anthropicApiKey?: string
@@ -23,8 +24,9 @@ function parseBoolean(value: any) {
   return value === true || value === 'true'
 }
 
-function getDailyFreeQuestionLimitEnabled() {
-  const rawValue = process.env.DAILY_FREE_QUESTION_LIMIT_ENABLED
+function getFreeQuestionLimitEnabled() {
+  const rawValue =
+    process.env.FREE_QUESTION_LIMIT_ENABLED ?? process.env.DAILY_FREE_QUESTION_LIMIT_ENABLED
   if (typeof rawValue === 'undefined') {
     return true
   }
@@ -32,19 +34,70 @@ function getDailyFreeQuestionLimitEnabled() {
   return rawValue === 'true' || rawValue === '1'
 }
 
-function getDailyFreeQuestionLimit() {
-  const rawValue = process.env.DAILY_FREE_QUESTION_LIMIT
+function getFreeQuestionLimit() {
+  const rawValue = process.env.FREE_QUESTION_LIMIT ?? process.env.DAILY_FREE_QUESTION_LIMIT
   const parsedValue = rawValue ? parseInt(rawValue, 10) : NaN
 
   if (!rawValue) {
-    throw new Error('DAILY_FREE_QUESTION_LIMIT env var is required')
+    throw new Error('FREE_QUESTION_LIMIT env var is required')
   }
 
   if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
-    throw new Error('DAILY_FREE_QUESTION_LIMIT must be a positive integer')
+    throw new Error('FREE_QUESTION_LIMIT must be a positive integer')
   }
 
   return parsedValue
+}
+
+function normalizeLimitPeriod(value: string | undefined): LimitPeriod {
+  if (!value) return 'day'
+
+  const normalized = value.trim().toLowerCase()
+  if (['day', 'daily', 'd'].includes(normalized)) return 'day'
+  if (['week', 'weekly', 'w'].includes(normalized)) return 'week'
+  if (['month', 'monthly', 'm'].includes(normalized)) return 'month'
+
+  throw new Error('FREE_QUESTION_LIMIT_PERIOD must be one of: day, week, month')
+}
+
+function getFreeQuestionLimitPeriod(): LimitPeriod {
+  const rawValue =
+    process.env.FREE_QUESTION_LIMIT_PERIOD ?? process.env.DAILY_FREE_QUESTION_LIMIT_PERIOD
+  return normalizeLimitPeriod(rawValue)
+}
+
+function getPeriodBounds(period: LimitPeriod) {
+  const start = new Date()
+  start.setHours(0, 0, 0, 0)
+
+  switch (period) {
+    case 'day': {
+      break
+    }
+    case 'week': {
+      const day = start.getDay()
+      const diffFromMonday = (day + 6) % 7 // convert Sunday=0 to Monday=0
+      start.setDate(start.getDate() - diffFromMonday)
+      break
+    }
+    case 'month': {
+      start.setDate(1)
+      break
+    }
+  }
+
+  const end = new Date(start)
+  if (period === 'day') {
+    end.setHours(23, 59, 59, 999)
+  } else if (period === 'week') {
+    end.setDate(end.getDate() + 7)
+    end.setMilliseconds(end.getMilliseconds() - 1)
+  } else if (period === 'month') {
+    end.setMonth(end.getMonth() + 1)
+    end.setMilliseconds(end.getMilliseconds() - 1)
+  }
+
+  return { start, end }
 }
 
 function formatMaskedAnthropicKey(key: string) {
@@ -68,18 +121,11 @@ export async function getAnthropicApiKeyForUser(userId: string) {
   return settings?.anthropicApiKey ?? null
 }
 
-export async function getDailyQuestionCount(userId: string) {
+export async function getQuestionCountForPeriod(userId: string) {
   const usageKey = getUsageKey(userId)
-  const startOfDay = new Date()
-  startOfDay.setHours(0, 0, 0, 0)
-  const endOfDay = new Date(startOfDay)
-  endOfDay.setHours(23, 59, 59, 999)
+  const { start, end } = getPeriodBounds(FREE_QUESTION_LIMIT_PERIOD)
 
-  const count = await kv.zcount(
-    usageKey,
-    startOfDay.getTime(),
-    endOfDay.getTime()
-  )
+  const count = await kv.zcount(usageKey, start.getTime(), end.getTime())
   return typeof count === 'number' ? count : 0
 }
 
@@ -87,17 +133,19 @@ export async function claimQuestionSlot(userId: string, chatId?: string) {
   const settings = await getSettingsForUser(userId)
   const hasAnthropicKey = !!settings?.anthropicApiKey
 
-  if (!DAILY_FREE_QUESTION_LIMIT_ENABLED) {
+  if (!FREE_QUESTION_LIMIT_ENABLED) {
     return {
       allowed: true,
       hasAnthropicKey,
       count: 0,
-      limit: 0
+      limit: 0,
+      limitPeriod: FREE_QUESTION_LIMIT_PERIOD
     }
   }
 
   const usageKey = getUsageKey(userId)
   const now = Date.now()
+  const { start } = getPeriodBounds(FREE_QUESTION_LIMIT_PERIOD)
 
   if (hasAnthropicKey) {
     await kv.zadd(usageKey, {
@@ -109,20 +157,21 @@ export async function claimQuestionSlot(userId: string, chatId?: string) {
       allowed: true,
       hasAnthropicKey: true,
       count: 0,
-      limit: DAILY_FREE_QUESTION_LIMIT
+      limit: FREE_QUESTION_LIMIT,
+      limitPeriod: FREE_QUESTION_LIMIT_PERIOD
     }
   }
 
-  const startOfDay = new Date()
-  startOfDay.setHours(0, 0, 0, 0)
+  await kv.zremrangebyscore(usageKey, 0, start.getTime() - 1)
 
-  const currentCount = await getDailyQuestionCount(userId)
-  if (currentCount >= DAILY_FREE_QUESTION_LIMIT) {
+  const currentCount = await getQuestionCountForPeriod(userId)
+  if (currentCount >= FREE_QUESTION_LIMIT) {
     return {
       allowed: false,
       hasAnthropicKey: false,
       count: currentCount,
-      limit: DAILY_FREE_QUESTION_LIMIT
+      limit: FREE_QUESTION_LIMIT,
+      limitPeriod: FREE_QUESTION_LIMIT_PERIOD
     }
   }
 
@@ -135,7 +184,8 @@ export async function claimQuestionSlot(userId: string, chatId?: string) {
     allowed: true,
     hasAnthropicKey: false,
     count: currentCount + 1,
-    limit: DAILY_FREE_QUESTION_LIMIT
+    limit: FREE_QUESTION_LIMIT,
+    limitPeriod: FREE_QUESTION_LIMIT_PERIOD
   }
 }
 
@@ -154,8 +204,8 @@ export async function getSettingsSnapshotForUser(
   email: string
 ): Promise<SettingsSnapshot> {
   const settings = await getSettingsForUser(userId)
-  const usageCount = DAILY_FREE_QUESTION_LIMIT_ENABLED
-    ? await getDailyQuestionCount(userId)
+  const usageCount = FREE_QUESTION_LIMIT_ENABLED
+    ? await getQuestionCountForPeriod(userId)
     : 0
   const user = await getUserByEmail(email)
 
@@ -172,9 +222,10 @@ export async function getSettingsSnapshotForUser(
       ? settings.anthropicApiKey.slice(-6)
       : undefined,
     anthropicKeyMasked,
-    limitsEnabled: DAILY_FREE_QUESTION_LIMIT_ENABLED,
-    dailyLimit: DAILY_FREE_QUESTION_LIMIT,
-    dailyCount: hasAnthropicKey || !DAILY_FREE_QUESTION_LIMIT_ENABLED ? 0 : usageCount,
+    limitsEnabled: FREE_QUESTION_LIMIT_ENABLED,
+    limit: FREE_QUESTION_LIMIT,
+    limitPeriod: FREE_QUESTION_LIMIT_PERIOD,
+    usageCount: hasAnthropicKey || !FREE_QUESTION_LIMIT_ENABLED ? 0 : usageCount,
     emailVerified
   }
 

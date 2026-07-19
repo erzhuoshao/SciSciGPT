@@ -52,8 +52,9 @@ export interface AccessInfo {
   anthropicKeyLast4?: string
   anthropicKeyMasked?: string
   limitsEnabled: boolean
-  dailyLimit: number
-  dailyCount: number
+  limit: number
+  limitPeriod: 'day' | 'week' | 'month'
+  usageCount: number
   emailVerified?: boolean
 }
 

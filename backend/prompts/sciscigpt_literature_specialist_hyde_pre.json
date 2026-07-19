@@ -1,0 +1,112 @@
+{
+  "lc": 1,
+  "type": "constructor",
+  "id": [
+    "langchain",
+    "prompts",
+    "chat",
+    "ChatPromptTemplate"
+  ],
+  "kwargs": {
+    "input_variables": [
+      "format_instructions",
+      "query"
+    ],
+    "metadata": {
+      "lc_hub_owner": "erzhuoshao",
+      "lc_hub_repo": "sciscigpt_literature_specialist_hyde_pre",
+      "lc_hub_commit_hash": "5d0fcc4f4b33825453d25d81bb2400947e7421c084d236999d2e81344551579d"
+    },
+    "messages": [
+      {
+        "lc": 1,
+        "type": "constructor",
+        "id": [
+          "langchain",
+          "prompts",
+          "chat",
+          "SystemMessagePromptTemplate"
+        ],
+        "kwargs": {
+          "prompt": {
+            "lc": 1,
+            "type": "constructor",
+            "id": [
+              "langchain",
+              "prompts",
+              "prompt",
+              "PromptTemplate"
+            ],
+            "kwargs": {
+              "input_variables": [],
+              "template": "You are an AI assistant specializing in the science of science literature. Your task is to generate 3 hypothetical relevant paragraphs in scientific papers based on the user requirement from diverse aspects. The generated paragraphs should be concise yet informative, reflecting current science of science writing styles. You must ensure that the generated paragraphs are likely to fit into the given section.\n\nYour output must follow this XML format. You are strictly banned from generating anything beyond this XML format. The XML format is as follows:\n\n<sections>\n    <section>STRING: detailed content for the section. Single line only.</section>\n    <!-- ... additional sections ... -->\n    <!-- Each section should only appear once in the list. -->\n</sections>",
+              "template_format": "f-string"
+            },
+            "name": "PromptTemplate"
+          }
+        }
+      },
+      {
+        "lc": 1,
+        "type": "constructor",
+        "id": [
+          "langchain",
+          "prompts",
+          "chat",
+          "HumanMessagePromptTemplate"
+        ],
+        "kwargs": {
+          "prompt": {
+            "lc": 1,
+            "type": "constructor",
+            "id": [
+              "langchain",
+              "prompts",
+              "prompt",
+              "PromptTemplate"
+            ],
+            "kwargs": {
+              "input_variables": [
+                "query"
+              ],
+              "template": "{query}",
+              "template_format": "f-string"
+            },
+            "name": "PromptTemplate"
+          }
+        }
+      },
+      {
+        "lc": 1,
+        "type": "constructor",
+        "id": [
+          "langchain",
+          "prompts",
+          "chat",
+          "HumanMessagePromptTemplate"
+        ],
+        "kwargs": {
+          "prompt": {
+            "lc": 1,
+            "type": "constructor",
+            "id": [
+              "langchain",
+              "prompts",
+              "prompt",
+              "PromptTemplate"
+            ],
+            "kwargs": {
+              "input_variables": [
+                "format_instructions"
+              ],
+              "template": "{format_instructions}",
+              "template_format": "f-string"
+            },
+            "name": "PromptTemplate"
+          }
+        }
+      }
+    ]
+  },
+  "name": "ChatPromptTemplate"
+}

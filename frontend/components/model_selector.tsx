@@ -24,19 +24,29 @@ export function ModelSelector({
   selectedModelId?: string;
   onModelChange?: (modelId: string) => void;
 } & React.ComponentProps<typeof Button>) {
-  const DEFAULT_MODEL_ID = 'claude-4.0';
+  const DEFAULT_MODEL_ID = 'claude-4.6';
 
   const availableChatModels = useMemo(
     () => [
       {
-        id: 'claude-3.7',
-        name: 'Claude 3.7',
-        description: 'Enhanced model with improved reasoning',
+        id: 'claude-4.6',
+        name: 'Claude 4.6',
+        description: 'Most advanced model with state-of-the-art capabilities',
+      },
+      {
+        id: 'claude-4.5',
+        name: 'Claude 4.5',
+        description: 'Latest generation with enhanced performance',
       },
       {
         id: 'claude-4.0',
         name: 'Claude 4.0',
-        description: 'Most advanced model with superior capabilities',
+        description: 'Advanced model with superior capabilities',
+      },
+      {
+        id: 'claude-3.7',
+        name: 'Claude 3.7',
+        description: 'Enhanced model with improved reasoning',
       },
     ],
     [],

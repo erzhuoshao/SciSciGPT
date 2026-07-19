@@ -18,6 +18,9 @@ def load_llm(metadata: dict, **kwargs):
         }
 
         model_config = {
+            "claude-4.6": {
+                "model_name": "claude-sonnet-4-6"
+            },
             "claude-4.5": {
                 "model_name": "claude-sonnet-4-5-20250929"
             },
@@ -47,6 +50,10 @@ def load_llm(metadata: dict, **kwargs):
         }
 
         model_config = {
+            "claude-4.6": {
+                "model_name": "claude-sonnet-4-6",
+                "max_output_tokens": 64_000,
+            },
             "claude-4.5": {
                 "model_name": "claude-sonnet-4-5@20250929",
                 "max_output_tokens": 64_000,

@@ -1,0 +1,6 @@
+[Unit]
+Description=Restart SciSciGPT Backend
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl restart sciscigpt-backend.service

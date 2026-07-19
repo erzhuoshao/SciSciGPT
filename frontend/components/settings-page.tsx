@@ -7,7 +7,6 @@ import { SettingsSnapshot } from '@/lib/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 
 export function SettingsPage({ initialSettings }: { initialSettings: SettingsSnapshot }) {
@@ -15,10 +14,32 @@ export function SettingsPage({ initialSettings }: { initialSettings: SettingsSna
   const [apiKey, setApiKey] = useState(initialSettings.anthropicKeyMasked ?? '')
   const [isPending, startTransition] = useTransition()
 
+  const limitPeriodLabel = useMemo(() => {
+    switch (settings.limitPeriod) {
+      case 'week':
+        return 'per week'
+      case 'month':
+        return 'per month'
+      default:
+        return 'per day'
+    }
+  }, [settings.limitPeriod])
+
+  const remainingWindowLabel = useMemo(() => {
+    switch (settings.limitPeriod) {
+      case 'week':
+        return 'this week'
+      case 'month':
+        return 'this month'
+      default:
+        return 'today'
+    }
+  }, [settings.limitPeriod])
+
   const remainingFreeQuestions = useMemo(() => {
     if (!settings.limitsEnabled) return 0
-    return Math.max(0, settings.dailyLimit - settings.dailyCount)
-  }, [settings.dailyCount, settings.dailyLimit, settings.limitsEnabled])
+    return Math.max(0, settings.limit - settings.usageCount)
+  }, [settings.limit, settings.usageCount, settings.limitsEnabled])
 
   const handleSaveApiKey = () => {
     startTransition(async () => {
@@ -30,7 +51,7 @@ export function SettingsPage({ initialSettings }: { initialSettings: SettingsSna
           hasAnthropicKey: true,
           anthropicKeyLast4: response.last4,
           anthropicKeyMasked: response.maskedKey,
-          dailyCount: 0
+          usageCount: 0
         }))
         setApiKey(response.maskedKey ?? '')
       } else if (response?.message) {
@@ -108,7 +129,8 @@ export function SettingsPage({ initialSettings }: { initialSettings: SettingsSna
           </div>
           {!settings.hasAnthropicKey && settings.limitsEnabled && (
             <p className="text-xs text-muted-foreground">
-              Free tier: {settings.dailyLimit} questions per day. Remaining today: {remainingFreeQuestions}
+              Free tier: {settings.limit} questions {limitPeriodLabel}. Remaining {remainingWindowLabel}:{' '}
+              {remainingFreeQuestions}
             </p>
           )}
         </div>
