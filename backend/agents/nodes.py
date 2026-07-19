@@ -8,6 +8,7 @@ from agents.prompts import research_manager_prompt, specialist_prompt_dict
 from agents.utils.agent_state import AgentState
 from agents.utils.messages import _extract_task_from_message, _extract_workflows_from_messages, _format_workflow
 from agents.utils.messages import _remove_xml_tags_from_messages, _extract_xml_tags_from_text
+from agents.utils.messages import _filter_rm_visible_messages
 
 from agents.utils.messages import return_messages
 
@@ -19,12 +20,14 @@ def call_research_manager(load_llm, tools, pruning_func, state: AgentState):
 		tools_by_name = {tool.name: tool for tool in tools}
 
 		human_message = HumanMessage(content="""
-		1. If further response is needed, assign a task to one of: database_specialist, analytics_specialist, literature_specialist
-		2. If user request has been fully addressed, synthesize a final answer.""")
+		Decide your next step:
+		1. If the request is ambiguous in a way that changes what should be done, ask the user to clarify and stop.
+		2. If further work is needed, assign the next task to exactly one of database_specialist, analytics_specialist, literature_specialist via a complete <task_brief>.
+		3. If the user request has been fully addressed, synthesize the final answer in <answer> tags.""")
 
 		input_messages = pruning_func([
-			*research_manager_prompt.invoke({}).messages, 
-			*_remove_xml_tags_from_messages(state['messages'], ["thinking"]), 
+			*research_manager_prompt.invoke({}).messages,
+			*_remove_xml_tags_from_messages(_filter_rm_visible_messages(state['messages']), ["thinking"]),
 			human_message
 		])
 
@@ -75,7 +78,7 @@ def call_specialist(load_llm, tools, pruning_func, state: AgentState):
 		if input_messages and isinstance(input_messages[-1], AIMessage):
 			input_messages.append(HumanMessage(content="""
 			Continue the task, taking the evaluation feedback above into account.
-			If the task is fully complete, call `evaluation_specialist`."""))
+			If the task is fully complete, end with your <handoff> block and call `evaluation_specialist`."""))
 
 		tags = [specialist]
 		response = llm.bind_tools(

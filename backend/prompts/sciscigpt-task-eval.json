@@ -1,49 +1,48 @@
 {
-  "lc": 1,
-  "type": "constructor",
-  "id": [
-    "langchain",
-    "prompts",
-    "chat",
-    "ChatPromptTemplate"
-  ],
-  "kwargs": {
-    "input_variables": [],
-    "metadata": {
-      "lc_hub_owner": "erzhuoshao",
-      "lc_hub_repo": "sciscigpt-task-eval",
-      "lc_hub_commit_hash": "7d5d09e8c60b1d9cd1e7fb4c33cc74f2e5c62ab13b3c39061ae382568cf36bc3"
-    },
-    "messages": [
-      {
-        "lc": 1,
-        "type": "constructor",
-        "id": [
-          "langchain",
-          "prompts",
-          "chat",
-          "HumanMessagePromptTemplate"
-        ],
-        "kwargs": {
-          "prompt": {
-            "lc": 1,
-            "type": "constructor",
-            "id": [
-              "langchain",
-              "prompts",
-              "prompt",
-              "PromptTemplate"
-            ],
-            "kwargs": {
-              "input_variables": [],
-              "template": "<system>\n<task>\nAnalyze the above task accomplishment workflow and provide a comprehensive reflection.\n</task>\n<instructions>\nBegin by enclosing all thoughts inside <thinking> tags. In this section:\n   - Break down the task into key components and requirements\n   - List potential approaches or methodologies applied to the task\n   - Identify key performance indicators and metrics used in the task\n   - Explore multiple angles and approaches to the problem\n   - Show all calculations and intermediate steps explicitly\n   - Record any adjustments made during the execution\n   - Note challenges encountered and solutions attempted\n   - Track resource usage and optimization efforts\n   - Compare the approach used to best practices in the field\n   - Use <thinking> as a scratchpad to write out all calculations and reasoning explicitly.\n\nProvide a clear and concise execution report within <report> tags. This report should:\n   - synthesize your thoughts and observations into a coherent summary of the task accomplishment process.\n   - Identify key components, critical steps, methodological choices, and key outcomes of the task.\n\nAssign a final reward score for the task accomplishment between 0.0 and 1.0 using <reward> tags:\n   - 0.8+: Continue current approach\n   - 0.5-0.7: Consider minor adjustments\n   - Below 0.5: Seriously consider backtracking and trying a different approach\nJustify your score very briefly within <thinking> tags.\n</instructions>\n</system>\n",
-              "template_format": "f-string"
-            },
-            "name": "PromptTemplate"
-          }
-        }
-      }
-    ]
+ "lc": 1,
+ "type": "constructor",
+ "id": [
+  "langchain",
+  "prompts",
+  "chat",
+  "ChatPromptTemplate"
+ ],
+ "kwargs": {
+  "input_variables": [],
+  "metadata": {
+   "lc_local_variant": "v2-protocol",
+   "lc_local_date": "2026-07-19"
   },
-  "name": "ChatPromptTemplate"
+  "messages": [
+   {
+    "lc": 1,
+    "type": "constructor",
+    "id": [
+     "langchain",
+     "prompts",
+     "chat",
+     "HumanMessagePromptTemplate"
+    ],
+    "kwargs": {
+     "prompt": {
+      "lc": 1,
+      "type": "constructor",
+      "id": [
+       "langchain",
+       "prompts",
+       "prompt",
+       "PromptTemplate"
+      ],
+      "kwargs": {
+       "input_variables": [],
+       "template": "<system>\n<task>\nAnalyze the above task workflow and produce the execution report that the ResearchManager will rely on. The ResearchManager cannot see the workflow itself - your report is its only window into what happened.\n</task>\n<instructions>\nWrite the report within <report> tags. It must contain, in order:\n1. The specialist's <handoff> block quoted VERBATIM (deliverable paths, key findings, caveats). If the final message contains no <handoff> block, or it is incomplete (e.g. missing file paths, schemas, or numbers a downstream task would need), reconstruct the missing references directly from the workflow and state explicitly that the handoff protocol was not followed.\n2. A concise account of the execution: critical steps, methodological choices, and key outcomes, including any concrete numbers or references a downstream task may need.\n3. Any errors, failed tool calls, or unresolved gaps.\n\nAssign a reward score for the task between 0.0 and 1.0 using <reward> tags:\n- 0.8+: solid execution and complete handoff - continue current approach\n- 0.5-0.7: usable but flawed - consider minor adjustments\n- Below 0.5: seriously consider backtracking and trying a different approach\nA missing or incomplete <handoff> caps the reward at 0.7.\n</instructions>\n<restrictions>\nYour response must contain only the <report> and <reward> tags.\n</restrictions>\n</system>",
+       "template_format": "f-string"
+      },
+      "name": "PromptTemplate"
+     }
+    }
+   }
+  ]
+ },
+ "name": "ChatPromptTemplate"
 }

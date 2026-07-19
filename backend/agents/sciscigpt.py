@@ -33,11 +33,13 @@ def define_sciscigpt_graph(load_llm):
 	node_research_manager = partial(
 		call_research_manager, load_llm, [DS, AS, LS], pruning_func)
 
-	# Allowing all specialists to see the full workflow
-	node_database_specialist = partial(call_specialist, load_llm, DS.tools + [ES], identity_func)
-	node_analytics_specialist = partial(call_specialist, load_llm, AS.tools + [ES], identity_func)
-	node_literature_specialist = partial(call_specialist, load_llm, LS.tools + [ES], identity_func)
-	node_evaluation_specialist = partial(call_evaluation, load_llm, [DS, AS, LS], identity_func)
+	# Chain-of-thought is write-only: <thinking> is dropped from every
+	# downstream LLM input (specialists and evaluators alike) to keep
+	# contexts clean of stale reasoning.
+	node_database_specialist = partial(call_specialist, load_llm, DS.tools + [ES], pruning_func)
+	node_analytics_specialist = partial(call_specialist, load_llm, AS.tools + [ES], pruning_func)
+	node_literature_specialist = partial(call_specialist, load_llm, LS.tools + [ES], pruning_func)
+	node_evaluation_specialist = partial(call_evaluation, load_llm, [DS, AS, LS], pruning_func)
 
 	node_specialistset = partial(call_specialistset, [DS, AS, LS])
 	node_toolset = partial(call_toolset, [ *DS.tools, *AS.tools, *LS.tools ])

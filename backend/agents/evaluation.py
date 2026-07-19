@@ -81,5 +81,5 @@ async def task_evaluation(model, input_messages):
 	response.tags = tags
 
 	response.tool_calls = []
-	response.content = _extract_xml_tags_from_text(response.text, ["reflection", "reward", "thinking"])
+	response.content = _extract_xml_tags_from_text(response.text, ["report", "reward"])
 	return response

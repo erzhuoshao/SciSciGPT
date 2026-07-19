@@ -81,6 +81,27 @@ def _extract_workflows_from_messages(messages: list[AnyMessage], specialist: str
 		return workflows
 
 
+def _filter_rm_visible_messages(messages: list[AnyMessage]) -> list[AnyMessage]:
+	"""ResearchManager context: user dialogue, its own turns, delegation
+	acknowledgements, each task's final handoff message, and task evaluation
+	reports. Specialists' intermediate work and raw tool outputs stay out."""
+	visible = []
+	for message in messages:
+		metadata = getattr(message, "metadata", None) or {}
+		name = metadata.get("name") or ""
+		current = metadata.get("current") or ""
+		next = metadata.get("next") or ""
+
+		if name == "call_specialist" and not next.startswith("node_evaluation_specialist"):
+			continue
+		if name == "call_toolset":
+			continue
+		if name == "call_evaluation" and current != "task_eval":
+			continue
+		visible.append(message)
+	return visible
+
+
 def _format_workflow(workflow: list[AnyMessage]) -> list[AnyMessage]:
 	task = _extract_task_from_message(workflow)
 	messages = [HumanMessage(content=task["task"])]
