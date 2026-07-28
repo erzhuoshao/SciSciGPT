@@ -43,6 +43,8 @@
 
 The system offers both a **public chat interface** at [sciscigpt.com](https://sciscigpt.com) and a **fully open-source implementation** on GitHub. *SciSciGPT* integrates multiple research capabilities: retrieving relevant SciSci publications, extracting data from complex databases, conducting advanced analytics, creating visualizations, and evaluating its own outputs. This seamless AI-powered workflow lowers technical barriers, enhances research efficiency, and enables new modes of human-AI collaboration.
 
+> **📊 User Adoption:** As of April 29, 2026, *SciSciGPT* has served **1,033 users** through its public chat interface at [sciscigpt.com](https://sciscigpt.com).
+
 
 
 ---
