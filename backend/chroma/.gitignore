@@ -1,0 +1,5 @@
+# Local build artifacts -- the store is rebuilt from HuggingFace, never committed.
+store/
+.venv/
+__pycache__/
+*.pyc

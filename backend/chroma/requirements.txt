@@ -1,0 +1,29 @@
+# Local Chroma vector store for SciSciGPT.
+#
+# NOTE ON INSTALLING INTO THE MAIN ENV
+# -----------------------------------
+# `chromadb` pulls in a large dependency tree (onnxruntime, kubernetes,
+# opentelemetry, uvloop, watchfiles, ~700 MB installed) and upgrades aiohttp
+# from 3.9.5 to 3.14.x. Two of those matter for the running backend:
+#
+#   * uvloop  -- uvicorn auto-selects uvloop when it is importable, which
+#                changes the production event loop implementation.
+#   * aiohttp -- a major-version jump underneath langchain/openai.
+#
+# That is why this directory ships its own venv for building and testing.
+# Decide deliberately before merging these into backend/requirements.txt.
+
+chromadb==1.5.9
+
+# Already present in backend/requirements.txt at compatible versions; listed
+# so this directory can be exercised standalone.
+huggingface_hub
+pyarrow
+pandas
+python-dotenv
+langchain-core
+langchain-openai
+
+# Only needed to run test_parity.py against the live Pinecone indexes.
+pinecone-client==5.0.1
+tabulate
