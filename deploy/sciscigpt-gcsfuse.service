@@ -1,0 +1,24 @@
+[Unit]
+Description=SciSciGPT GCS Workspace Mount (gcsfuse: sciscigpt-fs)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=shaoerzhuo
+Group=shaoerzhuo
+ExecStartPre=/bin/mkdir -p /home/shaoerzhuo/gcs-workspace /tmp/gcsfuse-cache
+ExecStart=/usr/bin/gcsfuse --foreground --implicit-dirs \
+  --file-cache-max-size-mb 2048 --cache-dir /tmp/gcsfuse-cache \
+  sciscigpt-fs /home/shaoerzhuo/gcs-workspace
+ExecStop=/bin/fusermount -u /home/shaoerzhuo/gcs-workspace
+
+Restart=on-failure
+RestartSec=10
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sciscigpt-gcsfuse
+
+[Install]
+WantedBy=multi-user.target

@@ -76,7 +76,7 @@ The system comprises five specialized agents:
 
 ### Data & Storage Services
 
-- **Vector Database**: [Pinecone](https://www.pinecone.io/) for semantic search in RAG
+- **Vector Database**: local [Chroma](https://www.trychroma.com/) store for semantic search in RAG (a managed [Pinecone](https://www.pinecone.io/) backend remains available via `VECTOR_BACKEND=pinecone`)
 - **Relational Database**: [Google BigQuery](https://cloud.google.com/bigquery) for hosting SciSci scholarly relational database
 - **File System**: [Google Cloud Storage](https://cloud.google.com/storage) for file uploads, artifacts, and visualizations
 
@@ -186,9 +186,28 @@ Then, create and download the service account [JSON credential key file](https:/
 
 ### Step 3: Configure Vector Database
 
-*SciSciGPT* uses Pinecone as a vector database to host the SciSciCorpus, a comprehensive collection of scientific literature. The corpus is indexed using vector embeddings to enable semantic search capabilities, allowing the *LiteratureSpecialist* agent to perform Retrieval-Augmented Generation (RAG) operations for Science of Science research. Moreover, *SciSciGPT* uses Pinecone as a vector database to host standardized institution and field names from SciSciNet, enabling semantic search capabilities for name disambiguation and standardization. This allows the *DatabaseSpecialist* agent to perform fuzzy matching and find the most appropriate standardized names when users provide variations or partial matches.
+*SciSciGPT* uses a vector database to host the SciSciCorpus, a comprehensive collection of scientific literature. The corpus is indexed using vector embeddings to enable semantic search capabilities, allowing the *LiteratureSpecialist* agent to perform Retrieval-Augmented Generation (RAG) operations for Science of Science research. Moreover, *SciSciGPT* uses the same vector database to host standardized institution and field names from SciSciNet, enabling semantic search capabilities for name disambiguation and standardization. This allows the *DatabaseSpecialist* agent to perform fuzzy matching and find the most appropriate standardized names when users provide variations or partial matches.
 
-**Setup Steps**
+The vector backend is selected with the `VECTOR_BACKEND` environment variable:
+
+- **`chroma` (recommended)** — a local, embedded [Chroma](https://www.trychroma.com/) store served from disk alongside the backend. No external vector service, no per-query network round trip (~30 ms corpus queries vs ~200 ms remote). The store lives in `backend/chroma/store` and is rebuilt from HuggingFace at any time.
+- **`pinecone` (default for backward compatibility)** — the original managed [Pinecone](https://www.pinecone.io/) setup.
+
+**Setup Steps (Chroma)**
+
+1. Obtain an OpenAI API key for text embedding generation ([OpenAI API keys](https://platform.openai.com/api-keys)) and finish Step 4 (`.env`) first;
+2. Build and verify the store (downloads the corpus with its precomputed embeddings from HuggingFace; only the 7,280 entity names are re-embedded, ~$0.01):
+
+```bash
+cd backend
+bash setup-chroma.sh
+```
+
+3. Set `VECTOR_BACKEND=chroma` in `backend/.env`.
+
+Chroma runs embedded in the backend process — there is no separate vector database server to operate. `setup-chroma.sh` is idempotent: it verifies the store (24,858 corpus sections, 311 fields, 6,969 institutions) and only rebuilds when verification fails. See `backend/chroma/README.md` for the adapter design, HNSW tuning, and the parity test suite against Pinecone.
+
+**Setup Steps (Pinecone, legacy)**
 
 1. Create a Pinecone account at https://www.pinecone.io;
 2. Create an index named `NAME_SEARCH_INDEX` with the following configuration:
@@ -213,13 +232,32 @@ GOOGLE_BIGQUERY_URI=bigquery://GCP_PROJECT_ID/BIGQUERY_DATASET_ID
 LOCAL_STORAGE_PATH=/tmp/sandbox
 GCS_BUCKET_NAME=GCS_BUCKET_NAME
 GCS_BUCKET_URL=https://storage.googleapis.com/GCS_BUCKET_NAME
+# When LOCAL_STORAGE_PATH is a gcsfuse mount of GCS_BUCKET_NAME (see the
+# GCE deployment notes below), set this so generated artifacts skip the
+# redundant upload and return their bucket URL directly.
+# GCS_WORKSPACE_MOUNTED=true
 
-PINECONE_API_KEY=PINECONE_API_KEY
+# chroma (local, recommended) or pinecone (legacy managed service)
+VECTOR_BACKEND=chroma
 OPENAI_API_KEY=OPENAI_API_KEY
+
+# Only required when VECTOR_BACKEND=pinecone
+PINECONE_API_KEY=PINECONE_API_KEY
 SCISCICORPUS_INDEX=SCISCICORPUS_INDEX
 SCISCICORPUS_NAMESPACE=SCISCICORPUS_NAMESPACE
 NAME_SEARCH_INDEX=NAME_SEARCH_INDEX
 ```
+
+#### GCE deployment: mount the GCS bucket as the session workspace
+
+When the backend runs on a Google Compute Engine VM, the artifact bucket can be mounted directly into the filesystem with [gcsfuse](https://github.com/GoogleCloudPlatform/gcsfuse), and `LOCAL_STORAGE_PATH` pointed at the mount. Every per-session workspace then lives *inside* the bucket: files written by the analysis sandboxes are immediately durable and publicly addressable, and the explicit artifact upload step becomes a no-op URL rewrite (`GCS_WORKSPACE_MOUNTED=true`).
+
+```bash
+gcsfuse --implicit-dirs --file-cache-max-size-mb 2048 --cache-dir /tmp/gcsfuse-cache \
+  GCS_BUCKET_NAME /path/to/workspace
+```
+
+A systemd unit for this mount is provided at `deploy/sciscigpt-gcsfuse.service`; the backend and frontend units should declare `After=`/`Requires=` on it so services only start with the workspace present.
 
 ---
 
@@ -227,15 +265,15 @@ NAME_SEARCH_INDEX=NAME_SEARCH_INDEX
 
 #### SciSciNet Relational Database
 
-Execute the `backend/SciSciNet-Relational.ipynb` notebook, which will automatically download all SciSciNet tables from the [SciSciGPT-SciSciNet HuggingFace repository](https://huggingface.co/datasets/ErzhuoShao/SciSciGPT-SciSciNet) and upload them to Google BigQuery with proper schema definitions, table descriptions, and column descriptions. The final dataset comprises 19 comprehensive tables: `authors`, `fields`, `institutions`, `nct`, `newsfeed`, `nih`, `nsf`, `paper_author_affiliations`, `paper_citations`, `paper_fields`, `paper_nct`, `paper_newsfeed`, `paper_nih`, `paper_nsf`, `paper_patents`, `paper_twitter`, `papers`, `patents`, and `twitter`. This collection provides extensive coverage of the innovation ecosystem, enabling comprehensive Science of Science research capabilities.
+Execute the `backend/SciSciNet-Relational.ipynb` notebook, which will automatically download all SciSciNet tables from the [SciSciGPT-SciSciNet HuggingFace repository](https://huggingface.co/datasets/cssi/SciSciGPT-SciSciNet) and upload them to Google BigQuery with proper schema definitions, table descriptions, and column descriptions. The final dataset comprises 19 comprehensive tables: `authors`, `fields`, `institutions`, `nct`, `newsfeed`, `nih`, `nsf`, `paper_author_affiliations`, `paper_citations`, `paper_fields`, `paper_nct`, `paper_newsfeed`, `paper_nih`, `paper_nsf`, `paper_patents`, `paper_twitter`, `papers`, `patents`, and `twitter`. This collection provides extensive coverage of the innovation ecosystem, enabling comprehensive Science of Science research capabilities.
 
 #### SciSciNet Vector Database
 
-Execute the `backend/SciSciNet-Vector.ipynb` notebook, which will automatically download the `fields` and `institutions` tables from the SciSciNet [SciSciGPT-SciSciNet HuggingFace repository](https://huggingface.co/datasets/ErzhuoShao/SciSciGPT-SciSciNet). The notebook will automatically generate embeddings for `field_name` and `institution_name` using OpenAI's `text-embedding-3-small` model, indexing each entity with its embedding vector along with other metadata. The resulting `NAME_SEARCH_INDEX` vector database serves the name disambiguation and standardization capabilities of the *DatabaseSpecialist*.
+With `VECTOR_BACKEND=chroma`, `bash backend/setup-chroma.sh` (Step 3) already builds the `field_name` and `institution_name` collections from the `fields` and `institutions` tables of the [SciSciGPT-SciSciNet HuggingFace repository](https://huggingface.co/datasets/cssi/SciSciGPT-SciSciNet), generating embeddings with OpenAI's `text-embedding-3-small` model. These collections serve the name disambiguation and standardization capabilities of the *DatabaseSpecialist*. (For the legacy Pinecone path, execute the `backend/SciSciNet-Vector.ipynb` notebook to upload the same entities to a `NAME_SEARCH_INDEX` Pinecone index.)
 
 #### SciSciCorpus Vector Database
 
-Execute the `backend/SciSciCorpus.ipynb` notebook to build your vector database. The notebook downloads the SciSciCorpus dataset from the [SciSciGPT-SciSciCorpus HuggingFace repository](https://huggingface.co/datasets/ErzhuoShao/SciSciGPT-SciSciCorpus), generates vector embeddings for research paper abstracts using OpenAI's `text-embedding-3-large` model, indexes each document with its embedding vector along with metadata like full textual content and bibliometric information, and uploads the indexed data to your Pinecone vector database. The resulting `SCISCICORPUS_INDEX` vector database will contain semantically searchable scientific literature with associated metadata, enabling the *LiteratureSpecialist* to perform sophisticated RAG-based research queries and literature discovery.
+With `VECTOR_BACKEND=chroma`, `bash backend/setup-chroma.sh` (Step 3) already builds the corpus collection together with the entity collections. To walk through the process manually, execute the `backend/SciSciCorpus.ipynb` notebook: it downloads the SciSciCorpus dataset from the [SciSciGPT-SciSciCorpus HuggingFace repository](https://huggingface.co/datasets/cssi/SciSciGPT-SciSciCorpus) — which ships the precomputed `text-embedding-3-large` vectors, so no re-embedding is needed — and indexes each document section into the local Chroma collection with its full textual content and bibliometric metadata. The resulting collection contains semantically searchable scientific literature, enabling the *LiteratureSpecialist* to perform sophisticated RAG-based research queries and literature discovery. (For the legacy Pinecone path, the pre-Chroma revision of this notebook uploads the same data to a `SCISCICORPUS_INDEX` Pinecone index.)
 
 ------
 
