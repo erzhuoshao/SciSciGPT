@@ -59,14 +59,20 @@ type_dict = {
 		
 
 # Initialize tools
-from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
-vectorstore_dict = {
-	namespace: PineconeVectorStore.from_existing_index(
-		embedding = OpenAIEmbeddings(model="text-embedding-3-small"),
-		namespace = namespace,
-		index_name = os.getenv("NAME_SEARCH_INDEX")
-	) for namespace in ["field_name", "institution_name"]
-}
+
+# Same VECTOR_BACKEND switch as tools/literature.py.
+if os.getenv("VECTOR_BACKEND", "pinecone").lower() == "chroma":
+	from chroma.factory import make_entity_stores
+	vectorstore_dict = make_entity_stores()
+else:
+	from langchain_pinecone import PineconeVectorStore
+	vectorstore_dict = {
+		namespace: PineconeVectorStore.from_existing_index(
+			embedding = OpenAIEmbeddings(model="text-embedding-3-small"),
+			namespace = namespace,
+			index_name = os.getenv("NAME_SEARCH_INDEX")
+		) for namespace in ["field_name", "institution_name"]
+	}
 
 search_name_tool = SearchNameTool(vectorstore_dict=vectorstore_dict, type_dict=type_dict)

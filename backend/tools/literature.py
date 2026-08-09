@@ -282,13 +282,21 @@ class SearchLiteratureAdvancedTool(BaseTool):
 
 
 from langchain_openai import OpenAIEmbeddings
-from langchain_pinecone import PineconeVectorStore
 from llms import load_llm
 
-vs = PineconeVectorStore.from_existing_index(
-	embedding = OpenAIEmbeddings(model="text-embedding-3-large", api_key=openai_api_key),
-	index_name = sciscicorpus_index,
-	namespace = sciscicorpus_namespace,
-)
+# Vector store backend switch. "pinecone" (default) is the original behavior;
+# "chroma" serves the same corpus from the local store built by
+# backend/chroma/build_index.py. Everything downstream consumes the
+# VectorStore interface and is unaffected.
+if os.getenv("VECTOR_BACKEND", "pinecone").lower() == "chroma":
+	from chroma.factory import make_corpus_store
+	vs = make_corpus_store(openai_api_key=openai_api_key)
+else:
+	from langchain_pinecone import PineconeVectorStore
+	vs = PineconeVectorStore.from_existing_index(
+		embedding = OpenAIEmbeddings(model="text-embedding-3-large", api_key=openai_api_key),
+		index_name = sciscicorpus_index,
+		namespace = sciscicorpus_namespace,
+	)
 
 search_literature_advanced_tool = SearchLiteratureAdvancedTool(vs=vs, load_llm=load_llm)

@@ -23,8 +23,14 @@ from __future__ import annotations
 import os
 from typing import Optional
 
-import config
-from chroma_vs import ChromaVectorStore
+try:
+	# imported as a package from the backend (tools/literature.py, tools/name.py)
+	from . import config
+	from .chroma_vs import ChromaVectorStore
+except ImportError:
+	# run as a script from inside backend/chroma (python factory.py)
+	import config
+	from chroma_vs import ChromaVectorStore
 
 _client = None
 
